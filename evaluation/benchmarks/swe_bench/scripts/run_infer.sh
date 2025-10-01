@@ -36,6 +36,15 @@ if [ -z "$RUN_WITH_BROWSING" ]; then
   RUN_WITH_BROWSING=false
 fi
 
+if [ -z "$USE_LOCAGENT_TOOLS" ]; then
+  echo "USE_LOCAGENT_TOOLS not specified, use default false"
+  USE_LOCAGENT_TOOLS=false
+fi
+
+if [ -z "$ENABLE_CMD" ]; then
+  echo "ENABLE_CMD not specified, use default false"
+  ENABLE_CMD=false
+fi
 
 if [ -z "$DATASET" ]; then
   echo "DATASET not specified, use default princeton-nlp/SWE-bench_Lite"
@@ -73,6 +82,8 @@ echo "NUM_WORKERS: $NUM_WORKERS"
 echo "COMMIT_HASH: $COMMIT_HASH"
 echo "MODE: $MODE"
 echo "EVAL_CONDENSER: $EVAL_CONDENSER"
+echo "USE_LOCAGENT_TOOLS: $USE_LOCAGENT_TOOLS"
+echo "ENABLE_CMD: $ENABLE_CMD"
 
 # Default to NOT use Hint
 if [ -z "$USE_HINT_TEXT" ]; then
@@ -120,6 +131,8 @@ function run_eval() {
     COMMAND="$COMMAND --eval-n-limit $EVAL_LIMIT"
   fi
 
+  echo $COMMAND
+  
   # Run the command
   eval $COMMAND
 }

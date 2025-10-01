@@ -77,6 +77,27 @@ def response_to_actions(
     assert len(response.choices) == 1, 'Only one choice is supported for now'
     choice = response.choices[0]
     assistant_msg = choice.message
+
+    # ================================================
+    # LocAgent's Tools
+    # ================================================
+    LOCAGENT_FUNCTIONS = [
+        'explore_tree_structure',
+        'search_code_snippets',
+        'get_entity_contents',
+    ]
+
+    LOCAGENT_ALT_FUNCTIONS = [
+        'explore_code_structure',
+        'search_for_code',
+        'get_code_contents_from_path_names',
+        'get_code_from_line_numbers'
+    ]
+    # Adding this here instead of calling
+    # locagent.function_calling
+    # since it was simpler to handle the just the
+    # action which is part of locagent
+    # ================================================
     if hasattr(assistant_msg, 'tool_calls') and assistant_msg.tool_calls:
         # Check if there's assistant_msg.content. If so, add it to the thought
         thought = ''
@@ -303,6 +324,18 @@ def response_to_actions(
                     name=tool_call.function.name,
                     arguments=arguments,
                 )
+            # ================================================
+            # LocAgent Tools
+            # ================================================
+            elif tool_call.function.name in LOCAGENT_FUNCTIONS:
+                # We implement this in agent_skills, which can be used via Jupyter
+                func_name = tool_call.function.name
+                code = f'print({func_name}(**{arguments}))'
+                logger.debug(f'LocAgentTOOL CALL in CodeAct: {func_name} with code: {code}')
+                action = IPythonRunCellAction(code=code)
+
+            elif tool_call.function.name in LOCAGENT_ALT_FUNCTIONS:
+                action = handle_alternate_locagent_tool(tool_call, arguments)
             else:
                 raise FunctionCallNotExistsError(
                     f'Tool {tool_call.function.name} is not registered. (arguments: {arguments}). Please check the tool name and retry with an existing tool.'
@@ -327,6 +360,27 @@ def response_to_actions(
             )
         )
 
+        # if assistant_msg.content and len(assistant_msg.content):
+        #     content = str(assistant_msg.content)
+        #     wait_for_response = False
+        #     logger.debug(f'No ToolCall and NON empty assistant_msg')
+        # elif assistant_msg.reasoning_content and len(assistant_msg.reasoning_content):
+        #     content = str(assistant_msg.reasoning_content)
+        #     wait_for_response = False
+        #     logger.debug(f'No ToolCall and EMPTY assistant_msg, using REASONING CONTENT')
+        # else:
+        #     content = ''
+        #     wait_for_response = True
+        #     logger.debug(f'No ToolCall and EMPTY assistant_msg, EMPTY REASONING CONTENT, defaulting to wait_for_response=True')
+
+        # actions.append(
+        #     MessageAction(
+        #         content=content,
+        #         wait_for_response=wait_for_response,
+        #     )
+        # )
+
+
     # Add response id to actions
     # This will ensure we can match both actions without tool calls (e.g. MessageAction)
     # and actions with tool calls (e.g. CmdRunAction, IPythonRunCellAction, etc.)
@@ -336,3 +390,58 @@ def response_to_actions(
 
     assert len(actions) >= 1
     return actions
+
+
+
+def handle_alternate_locagent_tool(tool_call, arguments):
+
+    code_map = {
+        "explore_code_structure": "explore_tree_structure",
+        "get_code_contents_from_path_names": "get_entity_contents",
+        "search_for_code": "search_code_snippets",
+        "get_code_from_line_numbers": "search_code_snippets"}
+
+    func_name = code_map.get(tool_call.function.name, None)
+
+    if func_name is None:
+        raise FunctionCallNotExistsError(
+                    f'Tool {tool_call.function.name} is not registered. (arguments: {arguments}). Please check the tool name and retry with an existing tool.'
+                )
+
+    if tool_call.function.name == "explore_code_structure":
+        # Special handling for explore_code_structure to map 'start' to 'start_entities'
+        if 'start' not in arguments:
+            raise FunctionCallValidationError(
+                f'Missing required argument "start" in tool call {tool_call.function.name}'
+            )
+        arguments['start_entities'] = arguments.pop('start')
+        arguments['direction'] = arguments.pop('direction_of_traversal', 'downstream')
+    elif tool_call.function.name == "get_code_contents_from_path_names":
+        # Special handling for get_code_contents_from_path_names to map 'path_names' to 'entity_names'
+        if 'path_names' not in arguments:
+            raise FunctionCallValidationError(
+                f'Missing required argument "path_names" in tool call {tool_call.function.name}'
+            )
+        arguments['entity_names'] = arguments.pop('path_names')
+
+    elif tool_call.function.name == "search_for_code":
+        # Special handling for search_for_code to map 'search_terms' to 'search_terms'
+        if 'search_terms' not in arguments:
+            raise FunctionCallValidationError(
+                f'Missing required argument "search_terms" in tool call {tool_call.function.name}'
+            )
+
+    elif tool_call.function.name == "get_code_from_line_numbers":
+        # Special handling for get_code_from_line_numbers to map 'line_numbers' to 'line_numbers' and 'file_path' to 'file_path_or_pattern'
+        if 'line_numbers' not in arguments:
+            raise FunctionCallValidationError(
+                f'Missing required argument "line_numbers" in tool call {tool_call.function.name}'
+            )
+
+        arguments['line_nums'] = arguments.pop('line_numbers')
+
+
+    code = f'print({func_name}(**{arguments}))'
+    logger.debug(f'LocAgentTOOL ALTERNATE CALL in CodeAct: {func_name} with code: {code}')
+    action = IPythonRunCellAction(code=code)
+    return action

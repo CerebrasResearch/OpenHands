@@ -303,7 +303,7 @@ def get_file_handler(
 ) -> TimedRotatingFileHandler:
     """Returns a file handler for logging."""
     os.makedirs(log_dir, exist_ok=True)
-    file_name = 'openhands.log'
+    file_name = f'openhands_{datetime.now().strftime('%y-%m-%d_%H-%M')}.log'
     file_handler = TimedRotatingFileHandler(
         os.path.join(log_dir, file_name),
         when=when,

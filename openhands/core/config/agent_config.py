@@ -51,6 +51,12 @@ class AgentConfig(BaseModel):
     """Whether to enable SoM (Set of Marks) visual browsing."""
     enable_plan_mode: bool = Field(default=True)
     """Whether to enable plan mode, which uses the long horizon system message and add the new tool - task_tracker - for planning, tracking and executing complex tasks."""
+    enable_locagent_tools_in_codeact: bool = Field(default=False)
+    """whether to add locagent tools to CodeAct Agent. Need a separate config option to avoid circular imports"""
+    enable_alternate_locagent_tools: bool = Field(default=False)
+    """whether to add locagent alternate tools to CodeAct Agent."""
+    add_locagent_tools_first: bool = Field(default=False)
+    """whether to add locagent tools at the start of the tool list instead of the end"""
     condenser: CondenserConfig = Field(
         # The default condenser is set to the conversation window condenser -- if
         # we use NoOp and the conversation hits the LLM context length limit,

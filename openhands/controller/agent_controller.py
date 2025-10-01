@@ -870,7 +870,8 @@ class AgentController:
                 action = self.agent.step(self.state)
                 if action is None:
                     raise LLMNoActionError('No action was returned')
-                action._source = EventSource.AGENT  # type: ignore [attr-defined]
+                if action.source != EventSource.USER_COMMAND:
+                    action._source = EventSource.AGENT  # type: ignore [attr-defined]
             except (
                 LLMMalformedActionError,
                 LLMNoActionError,

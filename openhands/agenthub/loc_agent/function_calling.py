@@ -17,6 +17,14 @@ from openhands.agenthub.loc_agent.tools import (
     SearchRepoTool,
     create_explore_tree_structure_tool,
 )
+
+from openhands.agenthub.loc_agent.tools import (
+    SearchCodeTool,
+    SearchRepoForCodeTool,
+    create_explore_code_structure_tool,
+    GetCodeLinesTool
+)
+
 from openhands.core.exceptions import (
     FunctionCallNotExistsError,
 )
@@ -122,4 +130,13 @@ def get_tools() -> list[ChatCompletionToolParam]:
     tools.append(SearchRepoTool)
     tools.append(SearchEntityTool)
     tools.append(create_explore_tree_structure_tool(use_simplified_description=True))
+    return tools
+
+
+def get_tools_alternate() -> list[ChatCompletionToolParam]:
+    tools = [FinishTool]
+    tools.append(SearchRepoForCodeTool)
+    tools.append(SearchCodeTool)
+    tools.append(GetCodeLinesTool)
+    tools.append(create_explore_code_structure_tool(use_simplified_description=False))
     return tools

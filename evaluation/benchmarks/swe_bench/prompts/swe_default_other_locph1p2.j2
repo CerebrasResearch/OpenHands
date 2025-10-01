@@ -1,0 +1,159 @@
+<uploaded_files>
+/workspace/{{ workspace_dir_name }}
+</uploaded_files>
+
+I've uploaded a python code repository in the directory {{ workspace_dir_name }}. Consider the following issue description:
+
+<issue_description>
+{{ instance.problem_statement }}
+</issue_description>
+
+Can you help me implement the necessary changes to the repository so that the requirements specified in the <issue_description> are met?
+I've already taken care of all changes to any of the test files described in the <issue_description>. This means you DON'T have to modify the testing logic or any of the tests in any way!
+Also the development Python environment is already set up for you (i.e., all dependencies already installed), so you don't need to install other packages.
+Your task is to make the minimal changes to non-test files in the /workspace/{{ workspace_dir_name }} directory to ensure the <issue_description> is satisfied.
+
+Follow these phases to resolve the issue:
+
+Phase 1.1. READING: Understand the PROBLEM: read the problem and reword it in clearer terms
+   1.1.1 If there are code or config snippets. Express in words any best practices or conventions in them.
+   1.1.2 Hightlight message errors, method names, variables, file names, stack traces, and technical details.
+   1.1.3 Explain the problem in clear terms.
+   1.1.4 Enumerate the steps to reproduce the problem.
+   1.1.5 Hightlight any best practices to take into account when testing and fixing the issue
+
+Phase 1.2 Understand the CODE Repository: read the codebase description using `explore_`tree_structure`, `search_code_snippets` and `get_code_snippets
+   1.2.1 Build a global view of the code directory structure using `explore_tree_structure` with `traversal_depth` greater than equal to 2  and `dependency_type_filter=['contains']`
+   Example Usage:
+      Exploring Downstream Dependencies:
+      ```
+      explore_tree_structure(
+         start_entities=['src/module_a.py:ClassA'],
+         direction='downstream',
+         traversal_depth=2,
+         dependency_type_filter=['invokes', 'imports'])
+      ```
+
+      Exploring the repository structure from the root directory (/) up to two levels deep:
+      ```
+      explore_tree_structure(
+         start_entities=['/'],
+         traversal_depth=2,
+         dependency_type_filter=['contains'])
+      ```
+   1.2.2 Identify likely candidates for relevant repository directries and build a deeper understanding of them using `search_code_snippets`
+   Example Usage:
+      Search for code content contain keyword `order`, `bill`
+      ```
+      search_code_snippets(search_terms=[\"order\", \"bill\"])
+      ```
+      Search for a class:
+      ```
+      search_code_snippets(search_terms=[\"MyClass\"])
+      ```
+      Search for context around specific lines (10 and 15) within a file
+      ```
+      search_code_snippets(line_nums=[10, 15], file_path_or_pattern='src/example.py')
+      ```
+   1.2.3 Finally, understand how relevant objects and functions are implemented, initialized and used using `get_code_snippets`
+   Example Usage:
+      Search for a specific function implementation:
+      ```
+      get_entity_contents(['src/my_file.py:MyClass.func_name'])
+      ```
+      Search for a file's complete content:
+      ```
+      get_entity_contents(['src/my_file.py'])
+      ```
+      **Entity Name Format:** To specify a function or class, use the format: `file_path:QualifiedName`\n  (e.g., 'src/helpers/math_helpers.py:MathUtils.calculate_sum').
+      - To search for a file's content, use only the file path (e.g., 'src/my_file.py').\n
+      - For classes, include the class name (e.g., 'src/models/user.py:User').
+      
+Phase 2. RUNNING: install and run the tests on the repository
+   2.1 Follow the readme
+   2.2 Install the environment and anything needed
+   2.2 Iterate and figure out how to run the tests
+
+Phase 3. EXPLORATION: find the files that are related to the problem and possible solutions
+   Follow these steps to localize the issue:
+   3.1: Categorize and Extract Key Problem Information
+      - Classify the problem statement into the following categories:
+         Problem description, error trace, code to reproduce the bug, and additional context.
+      - Extract specific terms, class names, method names, error messages from the issue
+      - IMMEDIATE KEYWORD SEARCH: Use `search_code_snippets` first
+      - Run: search_code_snippets(search_terms=["extracted_keywords"]) - this provides initial map of problem-related  code locations in '/workspace/{{ workspace_dir_name }}' directory
+      - Use extracted keywords and line numbers to search for relevant code references for additional context.
+   3.2: Locate Referenced Modules
+      - Accurately determine specific modules
+         - Explore the repo to familiarize yourself with its structure.
+         - MANDATORY: Use 'explore_tree_structure' for codebase overview: For example
+         ```
+         explore_tree_structure(
+           start_entities=['/workspace/{{ workspace_dir_name }}'],
+           traversal_depth=2,
+           dependency_type_filter=['contains']
+         )
+         ```
+         - Understand organization, identify main modules, locate relevant directories
+      - Pay special attention to distinguishing between modules with similar names using context and described execution flow.
+      - Output Format for collected relevant modules:
+         - Use the format: 'file_path:QualifiedName'
+         - E.g., for a function `calculate_sum` in the `MathUtils` class located in `src/helpers/math_helpers.py`, represent it as: 'src/helpers/math_helpers.py:MathUtils.calculate_sum'.
+      **SYSTEMATIC APPROACH**: Combine all three tools:
+         1. `search_code_snippets` - discover instances and patterns
+         2. `get_entity_contents` - examine complete implementations (** NO str_replace_editor with command arg = `view`**)
+         3. `explore_tree_structure` - understand relationships
+         - Use `grep` only as last resort when above tools insufficient
+      **ITERATIVE REFINEMENT**: Use `search_code_snippets` to expand findings whenever applicable
+
+   3.3: Analyze and Reproducing the Problem
+      - Clarify the Purpose of the Issue
+         - If expanding capabilities: Identify where and how to incorporate new behavior, fields, or modules.
+         - If addressing unexpected behavior: Focus on localizing modules containing potential bugs.
+      - Reconstruct the execution flow
+         - Identify main entry points triggering the issue.
+         - Trace function calls, class interactions, and sequences of events.
+         - Identify potential breakpoints causing the issue.
+         Important: Keep the reconstructed flow focused on the problem, avoiding irrelevant details.
+
+   3.4: Locate Areas for Modification
+      - Locate specific files, functions, or lines of code requiring changes or containing critical information for resolving the issue.
+      - Consider upstream and downstream dependencies that may affect or be affected by the issue.
+      - If applicable, identify where to introduce new fields, functions, or variables.
+      - Think Thoroughly: List multiple potential solutions and consider edge cases that could impact the resolution.
+
+   3.5 Use `grep` to search for relevant methods, classes, keywords and error messages if `search_code_snippets`,       `explore_tree_structure` and `get_entity_contents` fail.
+   3.6 Identify all files related to the problem statement.
+   3.7 Propose the methods and files to fix the issue and explain why.
+   3.8 From the possible file locations, select the most likely location to fix the issue.
+
+Phase 4. TEST CREATION: before implementing any fix, create a script to reproduce and verify the issue.
+   4.1 Look at existing test files in the repository to understand the test format/structure.
+   4.2 Create a minimal reproduction script that reproduces the located issue.
+   4.3 Run the reproduction script to confirm you are reproducing the issue.
+   4.4 Adjust the reproduction script as necessary.
+
+Phase 5. FIX ANALYSIS: state clearly the problem and how to fix it
+   5.1 State clearly what the problem is.
+   5.2 State clearly where the problem is located.
+   5.3 State clearly how the test reproduces the issue.
+   5.4 State clearly the best practices to take into account in the fix.
+   5.5 State clearly how to fix the problem.
+
+Phase 6. FIX IMPLEMENTATION: Edit the source code to implement your chosen solution.
+   6.1 Make minimal, focused changes to fix the issue.
+
+Phase 7. VERIFICATION: Test your implementation thoroughly.
+   7.1 Run your reproduction script to verify the fix works.
+   7.2 Add edge cases to your test script to ensure comprehensive coverage.
+   7.3 Run existing tests related to the modified code to ensure you haven't broken anything.
+
+8. FINAL REVIEW: Carefully re-read the problem description and compare your changes with the base commit {{ instance.base_commit }}.
+   8.1 Ensure you've fully addressed all requirements.
+   8.2 Run any tests in the repository related to:
+     8.2.1 The issue you are fixing
+     8.2.2 The files you modified
+     8.2.3 The functions you changed
+   8.3 If any tests fail, revise your implementation until all tests pass
+
+Be thorough in your exploration, testing, and reasoning. It's fine if your thinking process is lengthy - quality and completeness are more important than brevity.

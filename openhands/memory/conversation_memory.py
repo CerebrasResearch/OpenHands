@@ -236,7 +236,7 @@ class ConversationMemory:
             tool_metadata = action.tool_call_metadata
 
             # Allow user actions to skip tool metadata validation
-            if action.source == 'user' and tool_metadata is None:
+            if action.source in ['user', 'user_command'] and tool_metadata is None:
                 # For user-initiated actions without tool metadata, create a simple message
                 return [
                     Message(

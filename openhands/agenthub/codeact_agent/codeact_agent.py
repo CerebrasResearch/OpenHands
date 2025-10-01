@@ -44,6 +44,8 @@ from openhands.runtime.plugins import (
     PluginRequirement,
 )
 from openhands.utils.prompt import PromptManager
+from openhands.events.action import IPythonRunCellAction, CmdRunAction
+from openhands.events.event import EventSource
 
 
 class CodeActAgent(Agent):
@@ -95,6 +97,30 @@ class CodeActAgent(Agent):
         # Override with router if needed
         self.llm = self.llm_registry.get_router(self.config)
 
+        # If locagent tools enabled, build graph first
+        if self.config.enable_locagent_tools_in_codeact:
+            action = IPythonRunCellAction(code="from openhands_aci.indexing.locagent.tools import parse_repo_index; parse_repo_index()")
+            action.blocking = True
+            # action = IPythonRunCellAction(code="from openhands_aci.indexing.locagent.tools import parse_repo_index")
+            action.set_hard_timeout(600)
+            action._source = EventSource.USER_COMMAND
+            logger.debug("Build Graph and BM25 index for LocAgent tools")
+            logger.debug(action, extra={'msg_type': 'ACTION'})
+            self.pending_actions.append(action)
+
+            action = CmdRunAction(command='ls -altr _index_data/graph_index_v2.3', blocking=True)
+            action.set_hard_timeout(600)
+            action._source = EventSource.USER_COMMAND
+            logger.debug(action, extra={'msg_type': 'ACTION'})
+            self.pending_actions.append(action)
+
+            action = CmdRunAction(command='ls -altr _index_data/bm25_index', blocking=True)
+            action.set_hard_timeout(600)
+            action._source = EventSource.USER_COMMAND
+            logger.debug(action, extra={'msg_type': 'ACTION'})
+            self.pending_actions.append(action)
+
+
     @property
     def prompt_manager(self) -> PromptManager:
         if self._prompt_manager is None:
@@ -123,6 +149,19 @@ class CodeActAgent(Agent):
             )
 
         tools = []
+        tools_locagent = []
+        if self.config.enable_locagent_tools_in_codeact:
+            if self.config.enable_alternate_locagent_tools:
+                import openhands.agenthub.loc_agent.function_calling as locagent_function_calling
+                tools_locagent = locagent_function_calling.get_tools_alternate()
+            else:
+                import openhands.agenthub.loc_agent.function_calling as locagent_function_calling
+                tools_locagent = locagent_function_calling.get_tools()
+
+            tools_locagent.pop(0) # remove finish tool, CodeAct adds one by default based on config option
+
+
+
         if self.config.enable_cmd:
             tools.append(create_cmd_run_tool(use_short_description=use_short_tool_desc))
         if self.config.enable_think:
@@ -149,6 +188,14 @@ class CodeActAgent(Agent):
                     use_short_description=use_short_tool_desc
                 )
             )
+
+        if tools_locagent:
+            if self.config.add_locagent_tools_first:
+                tools = tools_locagent + tools
+            else:
+                tools = tools + tools_locagent
+            logger.debug(f'Added LocAgent tools: {[tool["function"]["name"] for tool in tools_locagent]}')
+
         return tools
 
     def reset(self) -> None:

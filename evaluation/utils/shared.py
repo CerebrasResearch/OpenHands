@@ -776,6 +776,7 @@ def get_openhands_config_for_eval(
         workspace_mount_path=workspace_mount_path,
         file_store='local',
         file_store_path=eval_store,
+        save_trajectory_path=os.path.abspath("./trajectories")
     )
 
     return config

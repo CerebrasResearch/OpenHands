@@ -10,6 +10,7 @@ class EventSource(str, Enum):
     AGENT = 'agent'
     USER = 'user'
     ENVIRONMENT = 'environment'
+    USER_COMMAND = 'user_command'
 
 
 class FileEditSource(str, Enum):

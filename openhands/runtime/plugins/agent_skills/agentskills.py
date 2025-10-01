@@ -22,6 +22,7 @@ try:
     __all__ += repo_ops.__all__
 except ImportError:
     # If repo_ops is not available, we just skip importing it.
+    print(f"There is an import error in agent_skills.py, {e}")
     pass
 
 

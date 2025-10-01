@@ -69,6 +69,11 @@ from openhands.utils.shutdown_listener import sleep_if_should_continue
 USE_HINT_TEXT = os.environ.get('USE_HINT_TEXT', 'false').lower() == 'true'
 RUN_WITH_BROWSING = os.environ.get('RUN_WITH_BROWSING', 'false').lower() == 'true'
 ENABLE_LLM_EDITOR = os.environ.get('ENABLE_LLM_EDITOR', 'false').lower() == 'true'
+USE_LOCAGENT_TOOLS = os.environ.get('USE_LOCAGENT_TOOLS', 'false').lower() == 'true'
+ENABLE_CMD = os.environ.get('ENABLE_CMD', 'false').lower() == 'true'
+ADD_LOCAGENT_TOOLS_FIRST = os.environ.get('ADD_LOCAGENT_TOOLS_FIRST', 'false').lower() == 'true'
+ALT_LOCAGENT_TOOLS = os.environ.get('ALT_LOCAGENT_TOOLS', 'false').lower() == 'true'
+INDEX_BASE_DIR = os.environ.get('INDEX_BASE_DIR', '')  # For LocAgent
 BenchMode = Literal['swe', 'swt', 'swt-ci']
 
 # Global variable to track dataset type
@@ -123,6 +128,14 @@ def get_instruction(instance: pd.Series, metadata: EvalMetadata) -> MessageActio
             template_name = (
                 'swe_default.j2'  # Default for 'swe' mode (regular swe-bench)
             )
+            # if USE_LOCAGENT_TOOLS:
+            #     template_name = (
+            #         'swe_default_other.j2'  # Default for 'swe' mode (regular swe-bench)
+            #     )
+            # else:
+            #     template_name = (
+            #         'swe_default.j2'  # Default for 'swe' mode (regular swe-bench)
+            #     )
     else:
         # Fallback or error handling if mode is unexpected
         logger.error(f'Unexpected evaluation mode: {mode}. Falling back to default.')
@@ -231,6 +244,13 @@ def get_config(
         instance_id=instance['instance_id'],
     )
 
+    oh_aci_li_cmd = '/openhands/micromamba/bin/micromamba run -n openhands poetry run pip install openhands-aci[llama]'
+    sandbox_config.runtime_extra_deps = oh_aci_li_cmd
+    workspace_dir_name = _get_swebench_workspace_dir_name(instance)
+    sandbox_config.runtime_startup_env_vars = {
+        'REPO_PATH': f'/workspace/{workspace_dir_name}/',
+    }
+
     config = get_openhands_config_for_eval(
         metadata=metadata,
         enable_browser=RUN_WITH_BROWSING,
@@ -259,6 +279,10 @@ def get_config(
         condenser=metadata.condenser_config,
         enable_prompt_extensions=False,
         model_routing=model_routing_config,
+        enable_locagent_tools_in_codeact=USE_LOCAGENT_TOOLS,
+        enable_cmd=ENABLE_CMD,
+        add_locagent_tools_first=ADD_LOCAGENT_TOOLS_FIRST,
+        enable_alternate_locagent_tools=ALT_LOCAGENT_TOOLS,
     )
     config.set_agent_config(agent_config)
 
@@ -429,6 +453,64 @@ def initialize_runtime(
             f'Expected to find python interpreter from testbed, but got: {str(obs)}',
         )
 
+    if USE_LOCAGENT_TOOLS:
+        logger.info(f"Configuring LocAgent Tools - graph and BM25 index")
+        # Copy the processed indexes if available
+        action = CmdRunAction(command='mkdir -p _index_data/graph_index_v2.3')
+        logger.info(action, extra={'msg_type': 'ACTION'})
+        obs = runtime.run_action(action)
+        logger.info(obs, extra={'msg_type': 'OBSERVATION'})
+
+        action = CmdRunAction(command='echo $PWD && ls -l')
+        logger.info(action, extra={'msg_type': 'ACTION'})
+        obs = runtime.run_action(action)
+        logger.info(obs, extra={'msg_type': 'OBSERVATION'})
+
+
+        action = CmdRunAction(command='ls -l _index_data && echo "------\n" && ls -l _index_data/graph_index_v2.3')
+        logger.info(action, extra={'msg_type': 'ACTION'})
+        obs = runtime.run_action(action)
+        logger.info(obs, extra={'msg_type': 'OBSERVATION'})
+
+
+        # Check if an existing graph index file is available
+        graph_index_file_path = os.path.join(
+            INDEX_BASE_DIR, 'graph_index_v2.3', f'{instance["instance_id"]}.pkl'
+        )
+        if INDEX_BASE_DIR and os.path.exists(graph_index_file_path):
+            logger.info(
+                f'Copying graph index from {graph_index_file_path} to /workspace/{workspace_dir_name}/_index_data/graph_index_v2.3'
+            )
+
+            runtime.copy_to(
+                graph_index_file_path,
+                f'/workspace/{workspace_dir_name}/_index_data/graph_index_v2.3',
+            )
+            action = CmdRunAction(
+                command=f'mv _index_data/graph_index_v2.3/{instance["instance_id"]}.pkl _index_data/graph_index_v2.3/code_graph.pkl'
+            )
+            logger.info(action, extra={'msg_type': 'ACTION'})
+            obs = runtime.run_action(action)
+            logger.info(obs, extra={'msg_type': 'OBSERVATION'})
+
+            bm25_index_dir = os.path.join(
+                INDEX_BASE_DIR, 'BM25_index', instance['instance_id']
+            )
+            runtime.copy_to(
+                bm25_index_dir,
+                f'/workspace/{workspace_dir_name}/_index_data',
+                recursive=True,
+            )
+            action = CmdRunAction(
+                command=f'mv _index_data/{instance["instance_id"]} _index_data/bm25_index'
+            )
+            action.set_hard_timeout(600)
+            logger.info(action, extra={'msg_type': 'ACTION'})
+            obs = runtime.run_action(action)
+            logger.info(obs, extra={'msg_type': 'OBSERVATION'})
+            assert_and_raise(obs.exit_code == 0, f'Failed to mv file: {str(obs)}')
+
+
     logger.info('-' * 30)
     logger.info('END Runtime Initialization Fn')
     logger.info('-' * 30)
@@ -551,9 +633,15 @@ def complete_runtime(
     n_retries = 0
     git_patch = None
     while n_retries < 5:
-        action = CmdRunAction(
-            command=f'git diff --no-color --cached {instance["base_commit"]} > patch.diff'
-        )
+        if USE_LOCAGENT_TOOLS:
+            # exclude graph and index from git diff and patch
+            action = CmdRunAction(
+                command=f"git diff --no-color --cached {instance["base_commit"]} -- . ':(exclude)_index_data' > patch.diff"
+            )
+        else:
+            action = CmdRunAction(
+                command=f'git diff --no-color --cached {instance["base_commit"]} > patch.diff'
+            )
         action.set_hard_timeout(max(300 + 100 * n_retries, 600))
         logger.info(action, extra={'msg_type': 'ACTION'})
         obs = runtime.run_action(action)
@@ -831,13 +919,16 @@ if __name__ == '__main__':
     dataset_description = (
         args.dataset.replace('/', '__') + '-' + args.split.replace('/', '__')
     )
+
+    eval_output_dir = os.environ.get('EVAL_OUTPUT_DIR', args.eval_output_dir)
+    logger.debug(f"Eval output dir: {eval_output_dir}")
     metadata = make_metadata(
         llm_config,
         dataset_description,
         args.agent_cls,
         args.max_iterations,
         args.eval_note,
-        args.eval_output_dir,
+        eval_output_dir,
         details=details,
         agent_config=agent_config,
         condenser_config=condenser_config,
