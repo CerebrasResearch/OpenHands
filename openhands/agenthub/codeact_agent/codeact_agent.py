@@ -155,7 +155,7 @@ class CodeActAgent(Agent):
         if self.config.enable_locagent_tools_in_codeact:
             if self.config.enable_alternate_locagent_tools:
                 import openhands.agenthub.loc_agent.function_calling as locagent_function_calling
-                tools_locagent = locagent_function_calling.get_tools_alternate()
+                tools_locagent = locagent_function_calling.get_tools_alternate(enable_code_comments_tool=self.config.enable_code_comments_tool_in_alternate_locagent_tools)
             else:
                 import openhands.agenthub.loc_agent.function_calling as locagent_function_calling
                 tools_locagent = locagent_function_calling.get_tools()

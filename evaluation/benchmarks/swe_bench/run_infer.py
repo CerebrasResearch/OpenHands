@@ -69,10 +69,13 @@ from openhands.utils.shutdown_listener import sleep_if_should_continue
 USE_HINT_TEXT = os.environ.get('USE_HINT_TEXT', 'false').lower() == 'true'
 RUN_WITH_BROWSING = os.environ.get('RUN_WITH_BROWSING', 'false').lower() == 'true'
 ENABLE_LLM_EDITOR = os.environ.get('ENABLE_LLM_EDITOR', 'false').lower() == 'true'
+
+## Note: Do not forget to also modify AgentConfig to use these values
 USE_LOCAGENT_TOOLS = os.environ.get('USE_LOCAGENT_TOOLS', 'false').lower() == 'true'
 ENABLE_CMD = os.environ.get('ENABLE_CMD', 'false').lower() == 'true'
 ADD_LOCAGENT_TOOLS_FIRST = os.environ.get('ADD_LOCAGENT_TOOLS_FIRST', 'false').lower() == 'true'
 ALT_LOCAGENT_TOOLS = os.environ.get('ALT_LOCAGENT_TOOLS', 'false').lower() == 'true'
+ENABLE_CODE_COMMENTS = os.environ.get('ENABLE_CODE_COMMENTS', 'false').lower() == 'true'
 INDEX_BASE_DIR = os.environ.get('INDEX_BASE_DIR', '')  # For LocAgent
 BenchMode = Literal['swe', 'swt', 'swt-ci']
 
@@ -286,6 +289,7 @@ def get_config(
         enable_cmd=ENABLE_CMD,
         add_locagent_tools_first=ADD_LOCAGENT_TOOLS_FIRST,
         enable_alternate_locagent_tools=ALT_LOCAGENT_TOOLS,
+        enable_code_comments_tool_in_alternate_locagent_tools=ENABLE_CODE_COMMENTS
     )
     config.set_agent_config(agent_config)
 

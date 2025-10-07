@@ -55,6 +55,8 @@ class AgentConfig(BaseModel):
     """whether to add locagent tools to CodeAct Agent. Need a separate config option to avoid circular imports"""
     enable_alternate_locagent_tools: bool = Field(default=False)
     """whether to add locagent alternate tools to CodeAct Agent."""
+    enable_code_comments_tool_in_alternate_locagent_tools: bool = Field(default=False)
+    """whether to use create_explore_code_structure_tool_with_comments instead of create_explore_code_structure_tool"""
     add_locagent_tools_first: bool = Field(default=False)
     """whether to add locagent tools at the start of the tool list instead of the end"""
     condenser: CondenserConfig = Field(

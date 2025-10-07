@@ -134,11 +134,13 @@ def get_tools() -> list[ChatCompletionToolParam]:
     return tools
 
 
-def get_tools_alternate() -> list[ChatCompletionToolParam]:
+def get_tools_alternate(enable_code_comments_tool=False) -> list[ChatCompletionToolParam]:
     tools = [FinishTool]
     tools.append(SearchRepoForCodeTool)
     tools.append(SearchCodeTool)
     tools.append(GetCodeLinesTool)
-    tools.append(create_explore_code_structure_tool_with_comments(use_simplified_description=False))
-    # tools.append(create_explore_code_structure_tool(use_simplified_description=False))
+    if enable_code_comments_tool:
+        tools.append(create_explore_code_structure_tool_with_comments(use_simplified_description=False))
+    else:
+        tools.append(create_explore_code_structure_tool(use_simplified_description=False))
     return tools
