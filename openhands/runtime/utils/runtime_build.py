@@ -59,6 +59,7 @@ def _generate_dockerfile(
         extra_deps=extra_deps if extra_deps is not None else '',
         enable_browser=enable_browser,
     )
+    print(f"---- Generated Dockerfile:\n{dockerfile_content}\n")
     return dockerfile_content
 
 
@@ -283,6 +284,11 @@ def prep_build_folder(
     # Copy the 'microagents' directory (Microagents)
     shutil.copytree(
         Path(project_root, 'microagents'), Path(build_folder, 'code', 'microagents')
+    )
+
+    # Copy the 'openhands-aci' directory (Microagents)
+    shutil.copytree(
+        Path(project_root, 'openhands-aci'), Path(build_folder, 'code', 'openhands-aci')
     )
 
     # Copy pyproject.toml and poetry.lock files

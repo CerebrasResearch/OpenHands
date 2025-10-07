@@ -91,7 +91,8 @@ def response_to_actions(
         'explore_code_structure',
         'search_for_code',
         'get_code_contents_from_path_names',
-        'get_code_from_line_numbers'
+        'get_code_from_line_numbers',
+        'get_code_structure_overview_with_code_comments'
     ]
     # Adding this here instead of calling
     # locagent.function_calling
@@ -337,6 +338,8 @@ def response_to_actions(
             elif tool_call.function.name in LOCAGENT_ALT_FUNCTIONS:
                 action = handle_alternate_locagent_tool(tool_call, arguments)
             else:
+                logger.debug(f"------- tool_call: {tool_call}, arguments: {arguments}, LOCAGENT_FUNCTIONS: {LOCAGENT_FUNCTIONS}")
+                logger.debug(f"------- tool_call: {tool_call}, arguments: {arguments}, LOCAGENT_ALT_FUNCTIONS: {LOCAGENT_ALT_FUNCTIONS}")
                 raise FunctionCallNotExistsError(
                     f'Tool {tool_call.function.name} is not registered. (arguments: {arguments}). Please check the tool name and retry with an existing tool.'
                 )
@@ -399,16 +402,17 @@ def handle_alternate_locagent_tool(tool_call, arguments):
         "explore_code_structure": "explore_tree_structure",
         "get_code_contents_from_path_names": "get_entity_contents",
         "search_for_code": "search_code_snippets",
-        "get_code_from_line_numbers": "search_code_snippets"}
+        "get_code_from_line_numbers": "search_code_snippets",
+        'get_code_structure_overview_with_code_comments': 'get_code_structure_overview_with_code_comments'}
 
     func_name = code_map.get(tool_call.function.name, None)
 
     if func_name is None:
         raise FunctionCallNotExistsError(
-                    f'Tool {tool_call.function.name} is not registered. (arguments: {arguments}). Please check the tool name and retry with an existing tool.'
+                    f'Im here Tool {tool_call.function.name} is not registered. (arguments: {arguments}). Please check the tool name and retry with an existing tool.'
                 )
 
-    if tool_call.function.name == "explore_code_structure":
+    if tool_call.function.name == "explore_code_structure" or tool_call.function.name == 'get_code_structure_overview_with_code_comments':
         # Special handling for explore_code_structure to map 'start' to 'start_entities'
         if 'start' not in arguments:
             raise FunctionCallValidationError(

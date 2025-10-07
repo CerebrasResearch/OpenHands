@@ -99,10 +99,12 @@ class CodeActAgent(Agent):
 
         # If locagent tools enabled, build graph first
         if self.config.enable_locagent_tools_in_codeact:
+            # action = IPythonRunCellAction(code="import openhands_aci; print(f'openhands_aci version: {openhands_aci.__file__}')")
+            # action.blocking = True
+
             action = IPythonRunCellAction(code="from openhands_aci.indexing.locagent.tools import parse_repo_index; parse_repo_index()")
             action.blocking = True
-            # action = IPythonRunCellAction(code="from openhands_aci.indexing.locagent.tools import parse_repo_index")
-            action.set_hard_timeout(600)
+            action.set_hard_timeout(1200)
             action._source = EventSource.USER_COMMAND
             logger.debug("Build Graph and BM25 index for LocAgent tools")
             logger.debug(action, extra={'msg_type': 'ACTION'})

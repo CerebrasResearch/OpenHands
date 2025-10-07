@@ -22,6 +22,7 @@ from openhands.agenthub.loc_agent.tools import (
     SearchCodeTool,
     SearchRepoForCodeTool,
     create_explore_code_structure_tool,
+    create_explore_code_structure_tool_with_comments,
     GetCodeLinesTool
 )
 
@@ -138,5 +139,6 @@ def get_tools_alternate() -> list[ChatCompletionToolParam]:
     tools.append(SearchRepoForCodeTool)
     tools.append(SearchCodeTool)
     tools.append(GetCodeLinesTool)
-    tools.append(create_explore_code_structure_tool(use_simplified_description=False))
+    tools.append(create_explore_code_structure_tool_with_comments(use_simplified_description=False))
+    # tools.append(create_explore_code_structure_tool(use_simplified_description=False))
     return tools

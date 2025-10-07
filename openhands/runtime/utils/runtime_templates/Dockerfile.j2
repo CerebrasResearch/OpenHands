@@ -304,6 +304,8 @@ RUN \
     git config --global user.email "openhands@all-hands.dev"
 
 COPY --chown=openhands:openhands ./code/pyproject.toml ./code/poetry.lock /openhands/code/
+COPY --chown=openhands:openhands ./code/openhands-aci /openhands/code/openhands-aci
+
 
 {{ install_dependencies_user() }}
 {{ install_dependencies_root() }}
@@ -330,7 +332,7 @@ RUN \
     mkdir -p $(dirname ${OPENVSCODE_SERVER_ROOT}) && \
     # Ensure ownership is correct for all OpenHands paths
     chown -R openhands:openhands /home/openhands || true && \
-    chown -R openhands:openhands /openhands || true
+    chown -R openhands:openhands /openhands || true[]
 
 {{ setup_vscode_server() }}
 
@@ -342,6 +344,7 @@ COPY --chown=openhands:openhands ./code/pyproject.toml ./code/poetry.lock /openh
 RUN if [ -d /openhands/code/microagents ]; then rm -rf /openhands/code/microagents; fi
 COPY --chown=openhands:openhands ./code/microagents /openhands/code/microagents
 COPY --chown=openhands:openhands ./code/openhands /openhands/code/openhands
+COPY --chown=openhands:openhands ./code/openhands-aci /openhands/code/openhands-aci
 RUN chmod a+rwx /openhands/code/openhands/__init__.py && \
     chown -R openhands:openhands /openhands/code
 

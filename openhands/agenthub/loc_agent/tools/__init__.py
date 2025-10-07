@@ -1,6 +1,6 @@
 from .explore_structure import create_explore_tree_structure_tool
 from .search_content import SearchEntityTool, SearchRepoTool
-from .explore_structure_desc import create_explore_code_structure_tool
+from .explore_structure_desc import create_explore_code_structure_tool, create_explore_code_structure_tool_with_comments
 from .search_content_desc import SearchCodeTool, SearchRepoForCodeTool, GetCodeLinesTool
 
 __all__ = [
@@ -10,6 +10,7 @@ __all__ = [
 
     # different descriptions
     'create_explore_code_structure_tool',
+    'create_explore_code_structure_tool_with_comments',
     'SearchCodeTool',
     'SearchRepoForCodeTool'
     'GetCodeLinesTool'

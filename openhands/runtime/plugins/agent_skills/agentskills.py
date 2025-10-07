@@ -15,12 +15,14 @@ __all__ = file_ops.__all__ + file_reader.__all__
 try:
     from openhands.runtime.plugins.agent_skills import repo_ops
 
+    print(f"In agent_skills.py, {dir(repo_ops)}")
+
     import_functions(
         module=repo_ops, function_names=repo_ops.__all__, target_globals=globals()
     )
 
     __all__ += repo_ops.__all__
-except ImportError:
+except ImportError as e:
     # If repo_ops is not available, we just skip importing it.
     print(f"There is an import error in agent_skills.py, {e}")
     pass

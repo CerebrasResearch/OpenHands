@@ -244,7 +244,10 @@ def get_config(
         instance_id=instance['instance_id'],
     )
 
-    oh_aci_li_cmd = '/openhands/micromamba/bin/micromamba run -n openhands poetry run pip install openhands-aci[llama]'
+    # oh_aci_li_cmd = '/openhands/micromamba/bin/micromamba run -n openhands poetry run pip install openhands-aci[llama]'
+    oh_aci_li_cmd = '/openhands/micromamba/bin/micromamba run -n openhands poetry run pip install -e "/openhands/code/openhands-aci[llama]"'
+
+
     sandbox_config.runtime_extra_deps = oh_aci_li_cmd
     workspace_dir_name = _get_swebench_workspace_dir_name(instance)
     sandbox_config.runtime_startup_env_vars = {
@@ -454,7 +457,11 @@ def initialize_runtime(
         )
 
     if USE_LOCAGENT_TOOLS:
+
         logger.info(f"Configuring LocAgent Tools - graph and BM25 index")
+
+        action = CmdRunAction(command='which python')
+        action.set_hard_timeout(600)
         # Copy the processed indexes if available
         action = CmdRunAction(command='mkdir -p _index_data/graph_index_v2.3')
         logger.info(action, extra={'msg_type': 'ACTION'})
