@@ -64,9 +64,7 @@ echo "  SPLIT: $SPLIT"
 echo "Evaluation completed. Results are saved in $EVAL_OUTPUT_DIR."
 
 
-
-
-# ---------- Post-processing: Summarize tool calls ----------
+## ---------- Post-processing: Summarize tool calls ----------
 JSONL_DIR="/workspaces/OpenHands/$EVAL_OUTPUT_DIR"
 
 ALL_JSONL_FILES=$(find "$JSONL_DIR" -type f -name "output.jsonl")
@@ -74,7 +72,7 @@ ALL_JSONL_FILES=$(find "$JSONL_DIR" -type f -name "output.jsonl")
 echo "Files in JSONL_DIR:"
 echo "$ALL_JSONL_FILES"
 
-# Get the first file path
+## Get the first file path
 JSONL_FILE=$(echo "$ALL_JSONL_FILES" | head -n 1)
 echo "Selected JSONL file: $JSONL_FILE"
 
@@ -90,7 +88,7 @@ TOOL_SUMMARY_OUTPUT="$PARENT_FOLDER/bash_tool_call_summary_$MODEL"
 
 echo "Tool call summary saved to $TOOL_SUMMARY_OUTPUT"
 
-# ---------- Post-processing: RUN EVAL ----------
+## ---------- Post-processing: RUN EVAL ----------
 
 DEBUG=1 /workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/eval_infer.sh \
     $JSONL_FILE \
@@ -101,7 +99,7 @@ DEBUG=1 /workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/eval_infer
 echo "Final evaluation completed."
 
 
-# ---------- Post-processing: RUN LOCALIZATION ----------
+## ---------- Post-processing: RUN LOCALIZATION ----------
 
 SWEBENCH_JSONL="$PARENT_FOLDER/output.swebench.jsonl"
 LOC_SUMMARY_OUTPUT="$PARENT_FOLDER/localization"
@@ -118,16 +116,146 @@ mkdir -p $LOC_SUMMARY_OUTPUT
 echo "Localization summary saved to $LOC_SUMMARY_OUTPUT"
 
 
-# ---------- Post-processing: ECHO final eval script ----------
+## ---------- Post-processing: ECHO final eval script ----------
+
 OUT="$PARENT_FOLDER/final_eval"
 mkdir -p $OUT
-OUT_FINAL="${OUT//\/workspaces/\/mlf11-shared\/coding\/aarti_oh_2}"
+OUT_FINAL="${OUT//\/workspaces/\/mlf11-shared\/coding\/test}"
 
+FINAL_PRED_PATH="${SWEBENCH_JSONL//\/workspaces/\/mlf11-shared\/coding\/test}"
 
-FINAL_PRED_PATH="${SWEBENCH_JSONL//\/workspaces/\/mlf11-shared\/coding\/aarti_oh_2}"
+# Create the execution script file
+EXEC_SCRIPT="$PARENT_FOLDER/run_commands.sh"
 
+# Write shebang
+echo "#!/bin/bash" > "$EXEC_SCRIPT"
+echo "" >> "$EXEC_SCRIPT"
+
+# Echo and write trajectory evaluation command
 echo "Running trajectory evaluation:"
-echo "python /mlf11-shared/coding/aarti_oh_2/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh.py \\"
-echo "  --run_id $MODEL \\"
-echo "  --predictions_path  $FINAL_PRED_PATH \\"
-echo "  --output_dir $OUT_FINAL"
+cat >> "$EXEC_SCRIPT" << EOF
+python /mlf11-shared/coding/test/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh.py \\
+  --run_id $MODEL \\
+  --predictions_path $FINAL_PRED_PATH \\
+  --output_dir $OUT_FINAL
+
+EOF
+
+# Display what was written
+cat << EOF
+python /mlf11-shared/coding/test/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh.py \\
+  --run_id $MODEL \\
+  --predictions_path $FINAL_PRED_PATH \\
+  --output_dir $OUT_FINAL
+EOF
+
+echo -e "\n\n\n"
+
+## ---------- Post-processing: ECHO LOCALIZATION FILTERED ----------
+
+JSONL_DIR="/workspaces/OpenHands/$EVAL_OUTPUT_DIR"
+
+ALL_JSONL_FILES=$(find "$JSONL_DIR" -type f -name "output.jsonl")
+
+echo "Files in JSONL_DIR:"
+echo "$ALL_JSONL_FILES"
+
+# Get the first file path
+JSONL_FILE=$(echo "$ALL_JSONL_FILES" | head -n 1)
+echo "Selected JSONL file: $JSONL_FILE"
+
+PARENT_FOLDER=$(dirname "$JSONL_FILE")
+TOOL_SUMMARY_OUTPUT="$PARENT_FOLDER/bash_tool_call_summary_filtered_$MODEL"
+
+LOC_JSONLS=$(find "$LOC_SUMMARY_OUTPUT" -type f -name "*localisation_report.jsonl")
+LOC_JSONL_FILE=$(echo "$LOC_JSONLS" | head -n 1)
+
+EVAL_JSONLS=$(find "$OUT_FINAL" -type f -name "consolidated_report*.json")
+EVAL_JSON=$(echo "$EVAL_JSONLS" | head -n 1)
+
+# Echo and write filtered localization command
+echo "Running FILTERED LOCALIZATION:"
+cat >> "$EXEC_SCRIPT" << EOF
+python \\
+    /mlf11-shared/coding/test/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary_filtered.py \\
+    --input_file "$JSONL_FILE" \\
+    --output_dir "$TOOL_SUMMARY_OUTPUT" \\
+    --loc_json "$LOC_JSONL_FILE" \\
+    --eval_json "$EVAL_JSON"
+
+EOF
+
+# Display what was written
+cat << EOF
+python \\
+    /mlf11-shared/coding/test/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary_filtered.py \\
+    --input_file "$JSONL_FILE" \\
+    --output_dir "$TOOL_SUMMARY_OUTPUT" \\
+    --loc_json "$LOC_JSONL_FILE" \\
+    --eval_json "$EVAL_JSON"
+EOF
+
+echo -e "\n\n\n"
+
+# Make the script executable
+chmod +x "$EXEC_SCRIPT"
+
+echo "Commands written to: $EXEC_SCRIPT"
+echo "To execute, run: $EXEC_SCRIPT"
+
+
+
+
+
+# # # ------------------------ PREVIOUS ------------------------
+# # # ---------- Post-processing: ECHO final eval script ----------
+
+# OUT="$PARENT_FOLDER/final_eval"
+# mkdir -p $OUT
+# OUT_FINAL="${OUT//\/workspaces/\/mlf11-shared\/coding\/test}"
+
+
+# FINAL_PRED_PATH="${SWEBENCH_JSONL//\/workspaces/\/mlf11-shared\/coding\/test}"
+
+# echo "Running trajectory evaluation:"
+# echo "python /mlf11-shared/coding/test/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh.py \\"
+# echo "  --run_id $MODEL \\"
+# echo "  --predictions_path  $FINAL_PRED_PATH \\"
+# echo "  --output_dir $OUT_FINAL"
+# echo -e "\n\n\n"
+
+# # # ---------- Post-processing: ECHO LOCALIZATION FILTERED ----------
+
+# JSONL_DIR="/workspaces/OpenHands/$EVAL_OUTPUT_DIR"
+
+# ALL_JSONL_FILES=$(find "$JSONL_DIR" -type f -name "output.jsonl")
+
+# echo "Files in JSONL_DIR:"
+# echo "$ALL_JSONL_FILES"
+
+# # Get the first file path
+# JSONL_FILE=$(echo "$ALL_JSONL_FILES" | head -n 1)
+# echo "Selected JSONL file: $JSONL_FILE"
+
+
+# PARENT_FOLDER=$(dirname "$JSONL_FILE")
+# TOOL_SUMMARY_OUTPUT="$PARENT_FOLDER/bash_tool_call_summary_filtered_$MODEL"
+
+# LOC_JSONLS=$(find "$LOC_SUMMARY_OUTPUT" -type f -name "*localisation_report.jsonl")
+# LOC_JSONL_FILE=$(echo "$LOC_JSONLS" | head -n 1)
+
+# EVAL_JSONLS=$(find "$OUT_FINAL" -type f -name "consolidated_report*.json")
+# EVAL_JSON=$(echo "$EVAL_JSONLS" | head -n 1)
+
+# echo "Running FILTERED LOCALIZATION:"
+# echo "/python \\
+#     /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary_filtered.py \\
+#     --input_file \"$JSONL_FILE\" \\
+#     --output_dir \"$TOOL_SUMMARY_OUTPUT\" \\
+#     --loc_json \"$LOC_JSONL_FILE\" \\
+#     --eval_json \"$EVAL_JSON\""
+
+# echo -e "\n\n\n"
+
+
+# # # ------------------------ END PREVIOUS ------------------------

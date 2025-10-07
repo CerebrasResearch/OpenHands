@@ -182,7 +182,6 @@ def main():
 
     localisation_report_path = os.path.join(localisation_report_dir, f'{model_name}_localisation_report.jsonl')
 
-
     print('Reading predictions from file:', predictions_path)
     print('Model used:', model_name)
     print('report saved at:', localisation_report_path)
