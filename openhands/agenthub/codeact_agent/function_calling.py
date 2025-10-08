@@ -15,7 +15,7 @@ from openhands.agenthub.codeact_agent.tools import (
     FinishTool,
     IPythonTool,
     LLMBasedFileEditTool,
-    ThinkTool,
+    create_think_tool,
     create_cmd_run_tool,
     create_str_replace_editor_tool,
 )
@@ -71,12 +71,20 @@ def set_security_risk(action: Action, arguments: dict) -> None:
 
 
 def response_to_actions(
-    response: ModelResponse, mcp_tool_names: list[str] | None = None
+    response: ModelResponse, mcp_tool_names: list[str] | None = None, is_last_tool_called = True
 ) -> list[Action]:
     actions: list[Action] = []
     assert len(response.choices) == 1, 'Only one choice is supported for now'
     choice = response.choices[0]
     assistant_msg = choice.message
+
+    # ================================================
+    # Think Tools
+    # ================================================
+    THINK_TOOLS = [
+        'think',
+        'think_plan_brainstorm'
+    ]
 
     # ================================================
     # LocAgent's Tools
@@ -216,45 +224,56 @@ def response_to_actions(
                         impl_source=FileReadSource.OH_ACI,
                         view_range=other_kwargs.get('view_range', None),
                     )
+                    set_security_risk(action, arguments)
                 else:
-                    if 'view_range' in other_kwargs:
-                        # Remove view_range from other_kwargs since it is not needed for FileEditAction
-                        other_kwargs.pop('view_range')
+                    if is_last_tool_called:
+                        if 'view_range' in other_kwargs:
+                            # Remove view_range from other_kwargs since it is not needed for FileEditAction
+                            other_kwargs.pop('view_range')
 
-                    # Filter out unexpected arguments
-                    valid_kwargs_for_editor = {}
-                    # Get valid parameters from the str_replace_editor tool definition
-                    str_replace_editor_tool = create_str_replace_editor_tool()
-                    valid_params = set(
-                        str_replace_editor_tool['function']['parameters'][
-                            'properties'
-                        ].keys()
-                    )
+                        # Filter out unexpected arguments
+                        valid_kwargs_for_editor = {}
+                        # Get valid parameters from the str_replace_editor tool definition
+                        str_replace_editor_tool = create_str_replace_editor_tool()
+                        valid_params = set(
+                            str_replace_editor_tool['function']['parameters'][
+                                'properties'
+                            ].keys()
+                        )
 
-                    for key, value in other_kwargs.items():
-                        if key in valid_params:
-                            # security_risk is valid but should NOT be part of editor kwargs
-                            if key != 'security_risk':
-                                valid_kwargs_for_editor[key] = value
-                        else:
-                            raise FunctionCallValidationError(
-                                f'Unexpected argument {key} in tool call {tool_call.function.name}. Allowed arguments are: {valid_params}'
-                            )
+                        for key, value in other_kwargs.items():
+                            if key in valid_params:
+                                # security_risk is valid but should NOT be part of editor kwargs
+                                if key != 'security_risk':
+                                    valid_kwargs_for_editor[key] = value
+                            else:
+                                raise FunctionCallValidationError(
+                                    f'Unexpected argument {key} in tool call {tool_call.function.name}. Allowed arguments are: {valid_params}'
+                                )
 
-                    action = FileEditAction(
-                        path=path,
-                        command=command,
-                        impl_source=FileEditSource.OH_ACI,
-                        **valid_kwargs_for_editor,
-                    )
+                        action = FileEditAction(
+                            path=path,
+                            command=command,
+                            impl_source=FileEditSource.OH_ACI,
+                            **valid_kwargs_for_editor,
+                        )
+                        set_security_risk(action, arguments)
+                    else:
+                        logger.info(f"INSERT MSG ABOUT THINK_PLAN_BRAINSTORM IN ")
+                        thought = "str_replace_editor' tool was called before the 'think_plan_brainstorm' tool is called. I need to call 'think_plan_brainstorm' tool with mode='plan'"
+                        action = MessageAction(content=thought)
 
-                set_security_risk(action, arguments)
+
             # ================================================
             # AgentThinkAction
             # ================================================
-            elif tool_call.function.name == ThinkTool['function']['name']:
-                action = AgentThinkAction(thought=arguments.get('thought', ''))
 
+            elif tool_call.function.name in THINK_TOOLS:
+                thought = arguments.get('thought', '')
+                mode = arguments.get('mode', None)
+                if mode is not None:
+                    thought = f"Mode: {mode} \n" + thought
+                action = AgentThinkAction(thought=thought)
             # ================================================
             # CondensationRequestAction
             # ================================================
@@ -393,6 +412,10 @@ def response_to_actions(
 
     assert len(actions) >= 1
     return actions
+
+
+def get_last_call_to_think_plan_brainstorm():
+    pass
 
 
 

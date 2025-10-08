@@ -5,7 +5,7 @@ from .finish import FinishTool
 from .ipython import IPythonTool
 from .llm_based_edit import LLMBasedFileEditTool
 from .str_replace_editor import create_str_replace_editor_tool
-from .think import ThinkTool
+from .think import create_think_tool, ThinkTool
 
 __all__ = [
     'BrowserTool',
@@ -15,5 +15,7 @@ __all__ = [
     'IPythonTool',
     'LLMBasedFileEditTool',
     'create_str_replace_editor_tool',
-    'ThinkTool',
+    'create_think_tool',
+    'ThinkTool'
+
 ]

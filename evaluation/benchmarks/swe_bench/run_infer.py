@@ -76,6 +76,7 @@ ENABLE_CMD = os.environ.get('ENABLE_CMD', 'false').lower() == 'true'
 ADD_LOCAGENT_TOOLS_FIRST = os.environ.get('ADD_LOCAGENT_TOOLS_FIRST', 'false').lower() == 'true'
 ALT_LOCAGENT_TOOLS = os.environ.get('ALT_LOCAGENT_TOOLS', 'false').lower() == 'true'
 ENABLE_CODE_COMMENTS = os.environ.get('ENABLE_CODE_COMMENTS', 'false').lower() == 'true'
+THINK_PLAN_BRAINSTORM = os.environ.get('THINK_PLAN_BRAINSTORM', 'false').lower() == 'true'
 INDEX_BASE_DIR = os.environ.get('INDEX_BASE_DIR', '')  # For LocAgent
 BenchMode = Literal['swe', 'swt', 'swt-ci']
 
@@ -263,12 +264,14 @@ def get_config(
         runtime=os.environ.get('RUNTIME', 'docker'),
         sandbox_config=sandbox_config,
     )
+    config.save_trajectory_path = os.path.join(metadata.eval_output_dir, 'llm_completions', instance['instance_id'], f"{instance['instance_id']}_trajectory.json")
 
     config.set_llm_config(
         update_llm_config_for_completions_logging(
             metadata.llm_config, metadata.eval_output_dir, instance['instance_id']
         )
     )
+
     # get 'draft_editor' config if exists
     config.set_llm_config(get_llm_config_arg('draft_editor'), 'draft_editor')
 
@@ -289,7 +292,8 @@ def get_config(
         enable_cmd=ENABLE_CMD,
         add_locagent_tools_first=ADD_LOCAGENT_TOOLS_FIRST,
         enable_alternate_locagent_tools=ALT_LOCAGENT_TOOLS,
-        enable_code_comments_tool_in_alternate_locagent_tools=ENABLE_CODE_COMMENTS
+        enable_code_comments_tool_in_alternate_locagent_tools=ENABLE_CODE_COMMENTS,
+        use_think_plan_brainstorm_tool=THINK_PLAN_BRAINSTORM
     )
     config.set_agent_config(agent_config)
 

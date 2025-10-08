@@ -59,6 +59,8 @@ class AgentConfig(BaseModel):
     """whether to use create_explore_code_structure_tool_with_comments instead of create_explore_code_structure_tool"""
     add_locagent_tools_first: bool = Field(default=False)
     """whether to add locagent tools at the start of the tool list instead of the end"""
+    use_think_plan_brainstorm_tool : bool = Field(default=False)
+    """for cases when enable_think is true - use_think_plan_brainstorm_tool=true, then use `think_plan_brainstorm` tool else use `think` tool """
     condenser: CondenserConfig = Field(
         # The default condenser is set to the conversation window condenser -- if
         # we use NoOp and the conversation hits the LLM context length limit,

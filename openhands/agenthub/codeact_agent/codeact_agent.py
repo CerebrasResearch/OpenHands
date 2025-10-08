@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 from collections import deque
 from typing import TYPE_CHECKING
 
@@ -26,13 +27,13 @@ from openhands.agenthub.codeact_agent.tools.str_replace_editor import (
 from openhands.agenthub.codeact_agent.tools.task_tracker import (
     create_task_tracker_tool,
 )
-from openhands.agenthub.codeact_agent.tools.think import ThinkTool
+from openhands.agenthub.codeact_agent.tools.think import create_think_tool
 from openhands.controller.agent import Agent
 from openhands.controller.state.state import State
 from openhands.core.config import AgentConfig
 from openhands.core.logger import openhands_logger as logger
 from openhands.core.message import Message
-from openhands.events.action import AgentFinishAction, MessageAction
+from openhands.events.action import AgentFinishAction, MessageAction, Action, SystemMessageAction
 from openhands.events.event import Event
 from openhands.llm.llm_utils import check_tools
 from openhands.memory.condenser import Condenser
@@ -122,6 +123,13 @@ class CodeActAgent(Agent):
             logger.debug(action, extra={'msg_type': 'ACTION'})
             self.pending_actions.append(action)
 
+        self.last_tool_call_args = [
+            {
+                "fcn_name": "think_plan_brainstorm",
+                "args": {"mode": "plan"}
+            }]
+        self.last_tool_call_id = None
+
 
     @property
     def prompt_manager(self) -> PromptManager:
@@ -167,7 +175,7 @@ class CodeActAgent(Agent):
         if self.config.enable_cmd:
             tools.append(create_cmd_run_tool(use_short_description=use_short_tool_desc))
         if self.config.enable_think:
-            tools.append(ThinkTool)
+            tools.append(create_think_tool(use_plan_brainstorm=self.config.use_think_plan_brainstorm_tool))
         if self.config.enable_finish:
             tools.append(FinishTool)
         if self.config.enable_condensation_request:
@@ -266,7 +274,11 @@ class CodeActAgent(Agent):
         }
         response = self.llm.completion(**params)
         logger.debug(f'Response from LLM: {response}')
-        actions = self.response_to_actions(response)
+        is_last_tool_called, last_tool_call_id = self.get_last_tool_call(state, self.last_tool_call_args)
+        is_last_tool_called = is_last_tool_called and (self.last_tool_call_id != last_tool_call_id)
+        if self.last_tool_call_id is None:
+            self.last_tool_call_id = last_tool_call_id
+        actions = self.response_to_actions(response, is_last_tool_called)
         logger.debug(f'Actions after response_to_actions: {actions}')
         for action in actions:
             self.pending_actions.append(action)
@@ -341,8 +353,84 @@ class CodeActAgent(Agent):
 
         return messages
 
-    def response_to_actions(self, response: 'ModelResponse') -> list['Action']:
+    def response_to_actions(self, response: 'ModelResponse', is_last_tool_called: bool) -> list['Action']:
+
         return codeact_function_calling.response_to_actions(
             response,
             mcp_tool_names=list(self.mcp_tools.keys()),
+            is_last_tool_called=is_last_tool_called
+        )
+
+    def get_last_tool_call(self, state: State, tool_args):
+        """
+        Check if ALL expected tool calls were made in a SINGLE agent action.
+
+        Args:
+            state: State object containing event history
+            tool_args: List of expected tool calls, e.g.:
+                [{
+                    "fcn_name": "xxx",
+                    "args": {"key": value}
+                }]
+
+        Returns:
+            bool: True if there's at least one action where ALL expected tools were called
+        """
+        for event in reversed(state.history):
+            # Skip non-agent events or events without actions
+            if event.source != EventSource.AGENT or not isinstance(event, Action) or isinstance(event, (SystemMessageAction, MessageAction)):
+                continue
+
+            tool_call_metadata = event.tool_call_metadata
+            if not tool_call_metadata:
+                continue
+
+            # Extract tool call information
+            response = tool_call_metadata.model_response
+            assistant_msg = response.choices[0].message
+            if not (hasattr(assistant_msg, 'tool_calls') and assistant_msg.tool_calls):
+                continue
+
+            # Reset for each event - check if THIS event has all expected tools
+            found_tools = set()
+
+            # Check all tool calls in this event (not just the first one)
+            for tool_call in assistant_msg.tool_calls:
+                actual_fcn_name = tool_call.function.name  # Fixed typo
+                try:
+                    actual_fcn_args = json.loads(tool_call.function.arguments)
+                except json.decoder.JSONDecodeError as e:
+                    raise FunctionCallValidationError(
+                        f'Failed to parse tool call arguments: {tool_call.function.arguments}'
+                    ) from e
+
+                # Check if this tool call matches any expected tool
+                for idx, expected_tool in enumerate(tool_args):
+                    expected_fcn_name = expected_tool["fcn_name"]
+                    expected_args = expected_tool["args"]
+
+                    if expected_fcn_name == actual_fcn_name:
+                        if self._args_match(expected_args, actual_fcn_args):
+                            found_tools.add(idx)
+
+            # Check if this single event matched ALL expected tools
+            if len(found_tools) == len(tool_args):
+                return True, response.id
+
+        return False, None
+
+    def _args_match(self, expected_args, actual_args):
+        """
+        Check if all expected arguments are present in actual arguments.
+
+        Args:
+            expected_args: Dictionary of expected key-value pairs
+            actual_args: Dictionary of actual arguments from tool call
+
+        Returns:
+            bool: True if all expected args match actual args
+        """
+        return all(
+            key in actual_args and actual_args[key] == value
+            for key, value in expected_args.items()
         )
