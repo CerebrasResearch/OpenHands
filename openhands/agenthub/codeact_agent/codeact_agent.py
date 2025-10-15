@@ -129,6 +129,7 @@ class CodeActAgent(Agent):
                 "args": {"mode": "plan"}
             }]
         self.last_tool_call_id = None
+        self.last_tool_call_variant = "only_once"  ## options: {"every_call", "only_once"}
 
 
     @property
@@ -274,10 +275,22 @@ class CodeActAgent(Agent):
         }
         response = self.llm.completion(**params)
         logger.debug(f'Response from LLM: {response}')
-        is_last_tool_called, last_tool_call_id = self.get_last_tool_call(state, self.last_tool_call_args)
-        is_last_tool_called = is_last_tool_called and (self.last_tool_call_id != last_tool_call_id)
-        if self.last_tool_call_id is None:
-            self.last_tool_call_id = last_tool_call_id
+        if self.config.enable_str_replace_edit_think_check:
+            if self.last_tool_call_variant == "every_call":
+                is_last_tool_called, last_tool_call_id = self.get_last_tool_call(state, self.last_tool_call_args)
+                is_last_tool_called = is_last_tool_called and (self.last_tool_call_id != last_tool_call_id)
+                if self.last_tool_call_id is None:
+                    self.last_tool_call_id = last_tool_call_id
+            elif self.last_tool_call_variant == "only_once":
+                if self.last_tool_call_id is None:
+                    is_last_tool_called, last_tool_call_id = self.get_last_tool_call(state, self.last_tool_call_args)
+                    if is_last_tool_called:
+                        self.last_tool_call_id = last_tool_call_id
+                else:
+                    is_last_tool_called = True
+        else:
+            is_last_tool_called = True
+
         actions = self.response_to_actions(response, is_last_tool_called)
         logger.debug(f'Actions after response_to_actions: {actions}')
         for action in actions:

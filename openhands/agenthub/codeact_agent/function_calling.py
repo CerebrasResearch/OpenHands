@@ -44,7 +44,40 @@ from openhands.events.action.mcp import MCPAction
 from openhands.events.event import FileEditSource, FileReadSource
 from openhands.events.tool import ToolCallMetadata
 from openhands.llm.tool_names import TASK_TRACKER_TOOL_NAME
+from openhands.events.event import EventSource
 
+
+_MSG_STR_REPLACE_EDITOR_v0 = "str_replace_editor' tool was called before the 'think_plan_brainstorm' tool is called. I need to call 'think_plan_brainstorm' tool with mode='plan'"
+
+_MSG_STR_REPLACE_EDITOR_v1 = """
+File {filepath} Edit Blocked: Implementation Plan Required
+You attempted to modify a file without first creating an implementation plan. Before making any edits, you must use the `think_plan_brainstorm` tool with mode='plan' to outline your intended changes.
+Please create a detailed plan that includes (refer to the think tool description for more details):
+
+Which files will be modified and why, listed in the order edits will be applied
+The specific changes you intend to make
+Dependencies, including related files and APIs
+
+Your next step should be to respond with this implementation plan.
+"""
+
+_MSG_STR_REPLACE_EDITOR_v2 = """
+File Edit Blocked: {filepath} due to missing Implementation plan.
+
+Before editing files, you must create an implementation plan using the `think_plan_brainstorm` tool with mode='plan'.
+
+Your plan should specify:
+- Files to modify (in edit order) and rationale
+- Files that should be created
+- Specific changes for each file
+- Dependencies and related components
+- Existing tests if any, that will be run
+- Tests that will be created and run
+
+Next step: Use `think_plan_brainstorm` with mode='plan' to outline your approach, then proceed with edits.
+"""
+
+MSG_THINK_EDIT = _MSG_STR_REPLACE_EDITOR_v2
 
 def combine_thought(action: Action, thought: str) -> Action:
     if not hasattr(action, 'thought'):
@@ -260,20 +293,25 @@ def response_to_actions(
                         set_security_risk(action, arguments)
                     else:
                         logger.info(f"INSERT MSG ABOUT THINK_PLAN_BRAINSTORM IN ")
-                        thought = "str_replace_editor' tool was called before the 'think_plan_brainstorm' tool is called. I need to call 'think_plan_brainstorm' tool with mode='plan'"
-                        action = MessageAction(content=thought)
-
+                        content = MSG_THINK_EDIT.format(filepath=path)
+                        action = MessageAction(content=content)
 
             # ================================================
             # AgentThinkAction
             # ================================================
 
             elif tool_call.function.name in THINK_TOOLS:
-                thought = arguments.get('thought', '')
+                thought_arg = arguments.get('thought', '')
+                if thought_arg:
+                    logger.info(f"------ OLD CONTENT: {response.choices[0].message.content}")
+                    content = response.choices[0].message.content or ""
+                    response.choices[0].message.content = f"{content}\nHere's my detailed thought:\n{thought_arg}"
+                    logger.info(f"------ NEW CONTENT: {response.choices[0].message.content}")
                 mode = arguments.get('mode', None)
                 if mode is not None:
-                    thought = f"Mode: {mode} \n" + thought
-                action = AgentThinkAction(thought=thought)
+                    thought_arg = f"Mode: {mode} \n" + thought_arg
+                action = AgentThinkAction(thought=thought_arg)
+
             # ================================================
             # CondensationRequestAction
             # ================================================
