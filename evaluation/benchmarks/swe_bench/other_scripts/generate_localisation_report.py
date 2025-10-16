@@ -5,16 +5,20 @@ from datasets import load_dataset, disable_progress_bars
 import matplotlib.pyplot as plt
 import argparse
 from tqdm import tqdm
-
+import toml
 
 ## disable datasets progress bars
 disable_progress_bars()
 
 # ORACLE_DATASET = 'princeton-nlp/SWE-bench_oracle'
 
-ORACLE_DATASET = 'princeton-nlp/SWE-bench_Verified'
+# ORACLE_DATASET = 'princeton-nlp/SWE-bench_Verified'
 
-oracle_ds = load_dataset(ORACLE_DATASET, split='test')
+# oracle_ds = load_dataset(ORACLE_DATASET, split='test')
+
+ORACLE_DATASET = 'princeton-nlp/SWE-bench'
+
+oracle_ds = load_dataset(ORACLE_DATASET, split='dev')
 
 
 ## load trajectory
@@ -100,8 +104,11 @@ def generate_plots(report, report_dir):
 
 
 def analyse_entry(instance_id, gen_patch):
+
     oracle_instance = oracle_ds.filter(lambda x: x['instance_id'] == instance_id)[0]
     oracle_patch = oracle_instance['patch']
+
+    print(f" Analysing {instance_id} --- {gen_patch} -- {oracle_patch}")
 
     files_modified_by_patch = extract_files_from_patch(gen_patch)
     files_needed_to_be_modified = extract_files_from_patch(oracle_patch)
@@ -138,7 +145,7 @@ def analyse_entry(instance_id, gen_patch):
 
     return cur_entry
 
-def analyse_patches(generated_entries, output_file='localisation_report.jsonl'):
+def analyse_patches(generated_entries, output_file=None):
 
     complete_report = []
 
@@ -148,10 +155,10 @@ def analyse_patches(generated_entries, output_file='localisation_report.jsonl'):
         cur_entry_analysis = analyse_entry(instance_id, gen_patch)
         complete_report.append(cur_entry_analysis)
 
-
-    with open(output_file, 'w') as f:
-        for entry in complete_report:
-            f.write(json.dumps(entry) +'\n')
+    if output_file is not None:
+        with open(output_file, 'w') as f:
+            for entry in complete_report:
+                f.write(json.dumps(entry) +'\n')
 
     return complete_report
 
@@ -166,6 +173,7 @@ def main():
     parser.add_argument('--model_name', type=str, required=True, help='Name of the model used for generating trajectories')
     parser.add_argument('--predictions_path', type=str, required=True, help='Path to the predictions JSONL file')
     parser.add_argument('--report_dir', type=str, required=True, help='Directory to save the localisation report and plots')
+    parser.add_argument('--selected_ids', type=str, required=False, default=None, help="Pass toml file with key selected_ids")
     args = parser.parse_args()
 
     model_name = args.model_name
@@ -174,10 +182,22 @@ def main():
 
     os.makedirs(localisation_report_dir, exist_ok=True)
 
+    selected_ids = None
+    if args.selected_ids is not None:
+        selected_ids = toml.load(args.selected_ids)["selected_ids"]
+
+    print(f"Selected_IDS: {selected_ids}")
+
     predictions_data = []
     with open(predictions_path, 'r', encoding='utf-8') as f:
         for line in f:
-            predictions_data.append(json.loads(line))
+            data_line = json.loads(line)
+            instance_id = data_line["instance_id"]
+            if selected_ids is not None:
+                if instance_id in selected_ids:
+                    predictions_data.append(data_line)
+            else:
+                predictions_data.append(data_line)
 
 
     localisation_report_path = os.path.join(localisation_report_dir, f'{model_name}_localisation_report.jsonl')
@@ -188,6 +208,7 @@ def main():
 
     complete_report = []
 
+    print(f'Len of predictions_data:',{len(predictions_data)})
     complete_report = analyse_patches(predictions_data, localisation_report_path)
 
     print('Generating plots...')

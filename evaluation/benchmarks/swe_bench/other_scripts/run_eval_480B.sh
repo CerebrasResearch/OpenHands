@@ -30,7 +30,7 @@ export EVAL_SKIP_MAXIMUM_RETRIES_EXCEEDED=true
 
 
 
-MODEL="llm.qwen_coder_30b_small"
+MODEL="llm.cerebras_qwen_480b"
 MAX_TURNS=100
 NUM_SAMPLES=200
 NUM_WORKERS=1
@@ -60,20 +60,20 @@ echo "  DATASET: $DATASET"
 echo "  SPLIT: $SPLIT"
 
 
-/workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer.sh \
-    $MODEL \
-    HEAD \
-    CodeActAgent \
-    $NUM_SAMPLES \
-    $MAX_TURNS \
-    $NUM_WORKERS \
-    $DATASET \
-    $SPLIT \
-    $NUM_RUNS \
-    swe
+# /workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer.sh \
+#     $MODEL \
+#     HEAD \
+#     CodeActAgent \
+#     $NUM_SAMPLES \
+#     $MAX_TURNS \
+#     $NUM_WORKERS \
+#     $DATASET \
+#     $SPLIT \
+#     $NUM_RUNS \
+#     swe
 
 
-echo "Evaluation completed. Results are saved in $EVAL_OUTPUT_DIR."
+# echo "Evaluation completed. Results are saved in $EVAL_OUTPUT_DIR."
 
 
 ## ---------- Post-processing: Summarize tool calls ----------

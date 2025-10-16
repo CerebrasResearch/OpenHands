@@ -3,6 +3,7 @@ import os
 import logging
 import matplotlib.pyplot as plt
 import argparse
+import toml
 
 
 
@@ -203,7 +204,7 @@ def eval_entry(entry, logger):
 
                 if item['source'] == 'agent':
                     ### tools to summarize  "edit/run/finish/message/think/"
-                    if action in ['edit', 'run', 'finish', 'think', 'task_tracking', 'run_ipython']:
+                    if action in ['edit', 'run', 'finish', 'think', 'task_tracking', 'run_ipython', 'view', 'read']:
                         function_name = item.get('tool_call_metadata', {}).get('function_name', '')
                         events_list.append(f"id_{item['id']}_{item['source']}_action_{action}_{function_name} {item['message']}")
                         agent_calls.append({'id': item['id'], 'action': action, 'function_name': item['tool_call_metadata']['function_name'], 'message': item['message']})
@@ -329,9 +330,13 @@ def save_metadata(group_name, filtered_entries, summary, metadata_dir, logger, o
     logger.info(f"Metadata saved to: {metadata_file}")
 
 
-def _filter_instances(loc_file, result_file, logger):
+def _filter_instances(loc_file, result_file, logger, selected_ids):
     with open(loc_file, 'r') as loc_fh:
         loc_data = [json.loads(line) for line in loc_fh if line.strip()]
+
+        if selected_ids is not None:
+            loc_data = [x for x in loc_data if x["instance_id"] in selected_ids]
+            logger.info(f"selected_data: {len(loc_data)}")
 
 
     recall_eq_1 = [item['instance_id'] for item in loc_data if item.get('recall', 0) == 1.0]
@@ -345,13 +350,20 @@ def _filter_instances(loc_file, result_file, logger):
 
     stats = result_data["swe_bench_statistics"]
     resolved = stats["resolved_ids"]
+    if selected_ids is not None:
+        resolved = [x for x in resolved if x in selected_ids]
     unresolved = stats["unresolved_ids"]
+    if selected_ids is not None:
+        unresolved = [x for x in unresolved if x in selected_ids]
 
-    logger.info(f"Resolved instances: {len(resolved)}/{stats['total_instances']}")
-    logger.info(f"Unresolved instances: {len(unresolved)}/{stats['total_instances']}")
+    total_instances = len(loc_data)
 
+    logger.info(f"Resolved instances: {len(resolved)}/{total_instances}")
+    logger.info(f"Unresolved instances: {len(unresolved)}/{total_instances}")
 
-    return recall_eq_1, recall_less_1, resolved, unresolved
+    all_instances = [x["instance_id"] for x in loc_data]
+
+    return recall_eq_1, recall_less_1, resolved, unresolved, all_instances
 
 
 # Function to filter entries
@@ -442,6 +454,7 @@ def parse_arguments():
     parser.add_argument("--output_dir", required=True, type=str, help="Directory to save the output files.")
     parser.add_argument("--loc_json", type=str, help="Path to the localization JSON file with instance details.", default=None, required=True)
     parser.add_argument("--eval_json", type=str, help="Path to the eval_summary JSON file with instance details.", default=None, required=True)
+    parser.add_argument('--selected_ids', type=str, required=False, default=None, help="Pass toml file with key selected_ids")
 
     return parser.parse_args()
 
@@ -471,7 +484,14 @@ if __name__ == "__main__":
     search_text_groups = get_search_text_groups()
     logger = setup_logging(output_dir)
 
-    recall_eq_1, recall_less_1, resolved, unresolved = _filter_instances(args.loc_json, args.eval_json, logger)
+    selected_ids = None
+    if args.selected_ids is not None:
+        selected_ids = toml.load(args.selected_ids)["selected_ids"]
+
+    logger.info(f"Selected_IDS: {selected_ids}")
+
+    recall_eq_1, recall_less_1, resolved, unresolved, all_instances = _filter_instances(args.loc_json, args.eval_json, logger, selected_ids)
+
 
     # Run the filtering process - recall=1
     if recall_eq_1:
@@ -544,6 +564,6 @@ if __name__ == "__main__":
     os.makedirs(metadata_dir, exist_ok=True)
     summary_dir = os.path.join(output_no_filter, "summary")
     os.makedirs(summary_dir, exist_ok=True)
-    filter_entries(input_file, search_text_groups, output_no_filter, metadata_dir, summary_dir, logger, filtered_instances=None)
+    filter_entries(input_file, search_text_groups, output_no_filter, metadata_dir, summary_dir, logger, filtered_instances=all_instances)
 
     logger.info("Processing completed.")

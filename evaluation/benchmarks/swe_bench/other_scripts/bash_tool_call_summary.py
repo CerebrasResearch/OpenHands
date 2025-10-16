@@ -3,31 +3,32 @@ import os
 import logging
 import matplotlib.pyplot as plt
 import argparse
+import toml
 
 
 
-qwen_input_file = '/cb/home/harshg/mlf2/agentic_flows/OpenHands/evaluation/evaluation_outputs/outputs/princeton-nlp__SWE-bench_Verified-test/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.54.0-no-hint-run_1/output.jsonl'
-gpt_oss_file ='/cb/home/harshg/mlf2/agentic_flows/OpenHands/evaluation/evaluation_outputs_aarti_fix_50/outputs/princeton-nlp__SWE-bench_Verified-test/CodeActAgent/gpt-oss-120b-small_maxiter_100_N_v0.54.0-no-hint-summarizer_for_eval_gptoss-120b-run_1/output.jsonl'
-output_dir_gpt_oss = "/cb/home/harshg/mlf2/agentic_flows/summaries_new/gpt_oss_120b__summary"
-output_dir_qwen = "/cb/home/harshg/mlf2/agentic_flows/summaries_new/qwen_coder_30b_tool_call__summary"
+# qwen_input_file = '/cb/home/harshg/mlf2/agentic_flows/OpenHands/evaluation/evaluation_outputs/outputs/princeton-nlp__SWE-bench_Verified-test/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.54.0-no-hint-run_1/output.jsonl'
+# gpt_oss_file ='/cb/home/harshg/mlf2/agentic_flows/OpenHands/evaluation/evaluation_outputs_aarti_fix_50/outputs/princeton-nlp__SWE-bench_Verified-test/CodeActAgent/gpt-oss-120b-small_maxiter_100_N_v0.54.0-no-hint-summarizer_for_eval_gptoss-120b-run_1/output.jsonl'
+# output_dir_gpt_oss = "/cb/home/harshg/mlf2/agentic_flows/summaries_new/gpt_oss_120b__summary"
+# output_dir_qwen = "/cb/home/harshg/mlf2/agentic_flows/summaries_new/qwen_coder_30b_tool_call__summary"
 
-qwen_480b_input = "/workspaces/OpenHands/evaluation/evaluation_outputs/outputs/princeton-nlp__SWE-bench_Verified-test/CodeActAgent/qwen-3-coder-480b_maxiter_250_N_v0.56.0-no-hint-run_1/output.jsonl"
-qwen_480b_output = "/workspaces/OpenHands/evaluation/evaluation_outputs/outputs/princeton-nlp__SWE-bench_Verified-test/CodeActAgent/qwen-3-coder-480b_maxiter_250_N_v0.56.0-no-hint-run_1"
+# qwen_480b_input = "/workspaces/OpenHands/evaluation/evaluation_outputs/outputs/princeton-nlp__SWE-bench_Verified-test/CodeActAgent/qwen-3-coder-480b_maxiter_250_N_v0.56.0-no-hint-run_1/output.jsonl"
+# qwen_480b_output = "/workspaces/OpenHands/evaluation/evaluation_outputs/outputs/princeton-nlp__SWE-bench_Verified-test/CodeActAgent/qwen-3-coder-480b_maxiter_250_N_v0.56.0-no-hint-run_1"
 
 
-qwen_30b_input = "/workspaces/OpenHands/evaluation/evaluation_outputs_50_cmd_loc/outputs/princeton-nlp__SWE-bench_Verified-test/CodeActAgent/qwen-coder-30b-small_maxiter_250_N_v0.56.0-no-hint-run_1/output.jsonl"
-qwen_30b_output = "/workspaces/OpenHands/evaluation/evaluation_outputs_50_cmd_loc/outputs/princeton-nlp__SWE-bench_Verified-test/CodeActAgent/qwen-coder-30b-small_maxiter_250_N_v0.56.0-no-hint-run_1/logs/bash_tools_summary_2"
+# qwen_30b_input = "/workspaces/OpenHands/evaluation/evaluation_outputs_50_cmd_loc/outputs/princeton-nlp__SWE-bench_Verified-test/CodeActAgent/qwen-coder-30b-small_maxiter_250_N_v0.56.0-no-hint-run_1/output.jsonl"
+# qwen_30b_output = "/workspaces/OpenHands/evaluation/evaluation_outputs_50_cmd_loc/outputs/princeton-nlp__SWE-bench_Verified-test/CodeActAgent/qwen-coder-30b-small_maxiter_250_N_v0.56.0-no-hint-run_1/logs/bash_tools_summary_2"
 
 
 
 def get_search_text_groups():
     search_text_groups = {
         "Empty_patches": {
-            "include": ['"test_result":{"git_patch":""}'],
+            "include": ['"test_result": {"git_patch": ""}'],
             "exclude": []
         },
         "Non-empty_patches": {
-            "include": ['"test_result":{"git_patch":"diff'],
+            "include": ['"test_result": {"git_patch": "diff'],
             "exclude": []
         },
         "agentGotStuckError": {
@@ -35,19 +36,19 @@ def get_search_text_groups():
             "exclude": []
         },
         "agentGotStuckError_and_empty_patches": {
-            "include": ['AgentStuckInLoopError: Agent got stuck in a loop','"test_result":{"git_patch":""}'],
+            "include": ['AgentStuckInLoopError: Agent got stuck in a loop','"test_result": {"git_patch": ""}'],
             "exclude": []
         },
         "agentGotStuckError_and_non_empty_patches": {
-            "include": ['AgentStuckInLoopError: Agent got stuck in a loop','"test_result":{"git_patch":"diff'],
+            "include": ['AgentStuckInLoopError: Agent got stuck in a loop','"test_result": {"git_patch": "diff'],
             "exclude": []
         },
         "without_errror_and_non_empty_patches": {
-            "include": ['"test_result":{"git_patch":"diff'],
+            "include": ['"test_result": {"git_patch": "diff'],
             "exclude": ["AGENT_ERROR$ERROR_ACTION_NOT_EXECUTED_ERROR", "AgentStuckInLoopError: Agent got stuck in a loop",'RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100','RuntimeError: There was an unexpected error while','STATUS$ERROR_LLM_INTERNAL_SERVER_ERROR']
         },
         "without_error_and_empty_patches": {
-            "include": ['"test_result":{"git_patch":""}'],
+            "include": ['"test_result": {"git_patch": ""}'],
             "exclude": ["AGENT_ERROR$ERROR_ACTION_NOT_EXECUTED_ERROR", "AgentStuckInLoopError: Agent got stuck in a loop",'RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100','RuntimeError: There was an unexpected error while','STATUS$ERROR_LLM_INTERNAL_SERVER_ERROR']
         },
         'without_error_patches': {
@@ -55,11 +56,11 @@ def get_search_text_groups():
             'exclude': ["AGENT_ERROR$ERROR_ACTION_NOT_EXECUTED_ERROR", "AgentStuckInLoopError: Agent got stuck in a loop",'RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100','RuntimeError: There was an unexpected error while','STATUS$ERROR_LLM_INTERNAL_SERVER_ERROR']
         },
         'max_iters_error_and_non_empty_patches' : {
-            "include": ['RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100','"test_result":{"git_patch":"diff'],
+            "include": ['RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100','"test_result": {"git_patch":"diff'],
             "exclude": []
         },
         "max_iters_error_and_empty_patches" : {
-            "include": ['RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100','"test_result":{"git_patch":""}'],
+            "include": ['RuntimeError: Agent reached maximum iteration. Current iteration: 100, max iteration: 100','"test_result": {"git_patch": ""}'],
             "exclude": []
         },
         'max_iters_error' : {
@@ -71,11 +72,11 @@ def get_search_text_groups():
             "exclude": []
         },
         "runtime_error_empty_patches":{
-            "include": ['RuntimeError: There was an unexpected error while','"test_result":{"git_patch":""}'],
+            "include": ['RuntimeError: There was an unexpected error while','"test_result": {"git_patch": ""}'],
             "exclude": []
         },
         "runtime_error_non_empty_patches":{
-            "include": ['RuntimeError: There was an unexpected error while','"test_result":{"git_patch":"diff'],
+            "include": ['RuntimeError: There was an unexpected error while','"test_result": {"git_patch": "diff'],
             "exclude": []
         },
         "llm_internal_server_error":{
@@ -84,7 +85,6 @@ def get_search_text_groups():
         },
     }
     return search_text_groups
-
 
 
 def plot_histograms(summary_data, group_name, output_dir):
@@ -209,7 +209,7 @@ def eval_entry(entry, logger):
 
                 if item['source'] == 'agent':
                     ### tools to summarize  "edit/run/finish/message/think/"
-                    if action in ['edit', 'run', 'finish', 'think', 'task_tracking', 'run_ipython']:
+                    if action in ['edit', 'run', 'finish', 'think', 'task_tracking', 'run_ipython', 'view', 'read']:
                         function_name = item.get('tool_call_metadata', {}).get('function_name', '')
                         events_list.append(f"id_{item['id']}_{item['source']}_action_{action}_{function_name} {item['message']}")
                         agent_calls.append({'id': item['id'], 'action': action, 'function_name': item['tool_call_metadata']['function_name'], 'message': item['message']})
@@ -334,7 +334,7 @@ def save_metadata(group_name, filtered_entries, summary, metadata_dir, logger):
 
 
 # Function to filter entries
-def filter_entries(input_file, search_text_groups, output_dir, metadata_dir, summary_dir, logger):
+def filter_entries(input_file, search_text_groups, output_dir, metadata_dir, summary_dir, logger, selected_ids):
     with open(input_file, 'r') as infile:
         lines = infile.readlines()
 
@@ -348,13 +348,18 @@ def filter_entries(input_file, search_text_groups, output_dir, metadata_dir, sum
                 entry = json.loads(line)
                 text = json.dumps(entry)  # Convert entry back to string for searching
 
+                if selected_ids is not None and entry["instance_id"] not in selected_ids:
+                    logger.info(f"Skipping {entry['instance_id']} since not in selected_ids")
+                    continue
+
                 # Check inclusion criteria (all must be present)
-                if all(inc_text in line for inc_text in include_texts):
+                if all(inc_text in text for inc_text in include_texts):
                     # Check exclusion criteria (none must be present)
                     if not any(exc_text in line for exc_text in exclude_texts):
                         filtered_entries.append(entry)
             except json.JSONDecodeError:
                 logger.info(f"Skipping invalid JSON line: {line}")
+
         # Create subdirectories for JSON and JSONL files
         json_dir = os.path.join(output_dir, "json")
         jsonl_dir = os.path.join(output_dir, "jsonl")
@@ -384,13 +389,14 @@ def filter_entries(input_file, search_text_groups, output_dir, metadata_dir, sum
         plot_histograms(summary, group_name, output_dir)
 
 
-         # Save metadata
+        # Save metadata
         save_metadata(group_name, filtered_entries, summary, metadata_dir, logger)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Filter JSONL entries based on search criteria.")
-    parser.add_argument("--input_file", type=str, help="Path to the input JSONL file.")
+    parser.add_argument("--input_file", type=str, help="Path to the input output JSONL file.")
     parser.add_argument("--output_dir", type=str, help="Directory to save the output files.")
+    parser.add_argument('--selected_ids', type=str, required=False, default=None, help="Pass toml file with key selected_ids")
     return parser.parse_args()
 
 
@@ -426,5 +432,11 @@ if __name__ == "__main__":
     search_text_groups = get_search_text_groups()
     logger = setup_logging(output_dir)
 
+    selected_ids = None
+    if args.selected_ids is not None:
+        selected_ids = toml.load(args.selected_ids)["selected_ids"]
+
+    logger.info(f"Selected_IDS: {selected_ids}")
+
     # Run the filtering process
-    filter_entries(input_file, search_text_groups, output_dir, metadata_dir, summary_dir, logger)
+    filter_entries(input_file, search_text_groups, output_dir, metadata_dir, summary_dir, logger, selected_ids)

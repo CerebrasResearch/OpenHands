@@ -60,20 +60,20 @@ echo "  DATASET: $DATASET"
 echo "  SPLIT: $SPLIT"
 
 
-/workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer.sh \
-    $MODEL \
-    HEAD \
-    CodeActAgent \
-    $NUM_SAMPLES \
-    $MAX_TURNS \
-    $NUM_WORKERS \
-    $DATASET \
-    $SPLIT \
-    $NUM_RUNS \
-    swe
+# /workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer.sh \
+#     $MODEL \
+#     HEAD \
+#     CodeActAgent \
+#     $NUM_SAMPLES \
+#     $MAX_TURNS \
+#     $NUM_WORKERS \
+#     $DATASET \
+#     $SPLIT \
+#     $NUM_RUNS \
+#     swe
 
 
-echo "Evaluation completed. Results are saved in $EVAL_OUTPUT_DIR."
+# echo "Evaluation completed. Results are saved in $EVAL_OUTPUT_DIR."
 
 
 ## ---------- Post-processing: Summarize tool calls ----------

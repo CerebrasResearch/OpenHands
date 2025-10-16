@@ -21,7 +21,8 @@ class SWEBenchEvaluator:
         self.run_id = run_id
         self.predictions_path = predictions_path
         self.output_dir = Path(output_dir)
-        self.docker_image_dir = "/mlf3-shared/sapankumars/swe_docker_images"
+        # self.docker_image_dir = "/mlf3-shared/sapankumars/swe_docker_images"
+        self.docker_image_dir = "/mlf11-shared/swebench_dockers/dev/docker_images"
         self.instance_ids_file = "/mlf-transfers-only/srinjoym/coding_agent_eval/50_problems_eval/problem_list.txt"
 
         # Create output directory if it doesn't exist
@@ -199,15 +200,27 @@ class SWEBenchEvaluator:
 
     def run_evaluation(self, instance_id: str) -> Dict:
         """Run SWE-bench evaluation for the given instance ID"""
+        # cmd = [
+        #     "python", "-m", "swebench.harness.run_evaluation",
+        #     "--dataset_name", "princeton-nlp/SWE-bench_Verified",
+        #     "--max_workers", "15",
+        #     "--cache_level", "none",
+        #     "--clean", "True",
+        #     "--predictions_path", self.predictions_path,
+        #     "--run_id", self.run_id,
+        #     "--instance_ids", instance_id
+        # ]
+
         cmd = [
             "python", "-m", "swebench.harness.run_evaluation",
-            "--dataset_name", "princeton-nlp/SWE-bench_verified",
+            "--dataset_name", "princeton-nlp/SWE-bench",
             "--max_workers", "15",
             "--cache_level", "none",
             "--clean", "True",
             "--predictions_path", self.predictions_path,
             "--run_id", self.run_id,
-            "--instance_ids", instance_id
+            "--instance_ids", instance_id,
+            "--split", "dev"
         ]
 
         self.logger.info(f"Running evaluation for {instance_id}")
