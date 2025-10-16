@@ -61,6 +61,8 @@ class AgentConfig(BaseModel):
     """whether to add locagent tools at the start of the tool list instead of the end"""
     use_think_plan_brainstorm_tool : bool = Field(default=False)
     """for cases when enable_think is true - use_think_plan_brainstorm_tool=true, then use `think_plan_brainstorm` tool else use `think` tool """
+    enable_str_replace_edit_think_check: bool = Field(default=False)
+    "whether to replace str_replace_editor in editing modes with message to invoke think tool if not called earlier"
     condenser: CondenserConfig = Field(
         # The default condenser is set to the conversation window condenser -- if
         # we use NoOp and the conversation hits the LLM context length limit,

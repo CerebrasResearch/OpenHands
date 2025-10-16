@@ -77,6 +77,8 @@ ADD_LOCAGENT_TOOLS_FIRST = os.environ.get('ADD_LOCAGENT_TOOLS_FIRST', 'false').l
 ALT_LOCAGENT_TOOLS = os.environ.get('ALT_LOCAGENT_TOOLS', 'false').lower() == 'true'
 ENABLE_CODE_COMMENTS = os.environ.get('ENABLE_CODE_COMMENTS', 'false').lower() == 'true'
 THINK_PLAN_BRAINSTORM = os.environ.get('THINK_PLAN_BRAINSTORM', 'false').lower() == 'true'
+ENABLE_STR_REPLACE_EDIT_THINK_CHECK = os.environ.get('ENABLE_STR_REPLACE_EDIT_THINK_CHECK', 'false').lower() == 'true'
+
 INDEX_BASE_DIR = os.environ.get('INDEX_BASE_DIR', '')  # For LocAgent
 BenchMode = Literal['swe', 'swt', 'swt-ci']
 
@@ -293,7 +295,8 @@ def get_config(
         add_locagent_tools_first=ADD_LOCAGENT_TOOLS_FIRST,
         enable_alternate_locagent_tools=ALT_LOCAGENT_TOOLS,
         enable_code_comments_tool_in_alternate_locagent_tools=ENABLE_CODE_COMMENTS,
-        use_think_plan_brainstorm_tool=THINK_PLAN_BRAINSTORM
+        use_think_plan_brainstorm_tool=THINK_PLAN_BRAINSTORM,
+        enable_str_replace_edit_think_check=ENABLE_STR_REPLACE_EDIT_THINK_CHECK
     )
     config.set_agent_config(agent_config)
 
