@@ -77,7 +77,24 @@ Your plan should specify:
 Next step: Use `think_plan_brainstorm` with mode='plan' to outline your approach, then proceed with edits.
 """
 
-MSG_THINK_EDIT = _MSG_STR_REPLACE_EDITOR_v2
+_MSG_STR_REPLACE_EDITOR_v3 = """
+File Edit Blocked: {filepath} due to missing Implementation plan.
+
+Before editing files, you must create an implementation plan using the `think_plan_brainstorm` tool with mode='plan'.
+
+Refer to the `think_plan_brainstorm` tool description for more details.
+
+Your plan should specify:
+- You must respond using ONLY markdown format. Do not use JSON or other formats.
+- Files to modify listed in the order edits will be applied and rationale for each
+- Files that should be created and rationale for each
+- Specific changes for each file
+- Dependencies including related files and APIs
+
+Next step: Use `think_plan_brainstorm` with mode='plan' to outline your approach, then proceed with edits.
+"""
+
+MSG_THINK_EDIT = _MSG_STR_REPLACE_EDITOR_v3
 
 def combine_thought(action: Action, thought: str) -> Action:
     if not hasattr(action, 'thought'):

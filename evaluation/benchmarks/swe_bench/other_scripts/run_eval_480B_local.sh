@@ -30,7 +30,9 @@ export EVAL_SKIP_MAXIMUM_RETRIES_EXCEEDED=true
 
 
 
-MODEL="llm.cerebras_qwen_480b"
+# MODEL="llm.cerebras_qwen_480b"
+MODEL="llm.together_qwen_480b"
+
 MAX_TURNS=100
 NUM_SAMPLES=200
 NUM_WORKERS=1
@@ -132,9 +134,9 @@ echo "Localization summary saved to $LOC_SUMMARY_OUTPUT"
 
 OUT="$PARENT_FOLDER/final_eval"
 mkdir -p $OUT
-OUT_FINAL="${OUT//\/workspaces/\/mlf11-shared\/coding\/test}"
+OUT_FINAL="${OUT}"
 
-FINAL_PRED_PATH="${SWEBENCH_JSONL//\/workspaces/\/mlf11-shared\/coding\/test}"
+FINAL_PRED_PATH="$SWEBENCH_JSONL"
 
 # Create the execution script file
 EXEC_SCRIPT="$PARENT_FOLDER/run_commands.sh"
@@ -147,7 +149,7 @@ echo "" >> "$EXEC_SCRIPT"
 echo "Running trajectory evaluation:"
 cat >> "$EXEC_SCRIPT" << EOF
 cd $OUT_FINAL
-python /mlf11-shared/coding/test/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh.py \\
+python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh_local.py \\
   --run_id $MODEL \\
   --predictions_path $FINAL_PRED_PATH \\
   --output_dir $OUT_FINAL
@@ -157,13 +159,21 @@ EOF
 # Display what was written
 cat << EOF
 cd $OUT_FINAL
-python /mlf11-shared/coding/test/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh.py \\
+python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh_local.py \\
   --run_id $MODEL \\
   --predictions_path $FINAL_PRED_PATH \\
   --output_dir $OUT_FINAL
 EOF
 
 echo -e "\n\n\n"
+
+cd $OUT_FINAL
+
+/home/vscode/.cache/pypoetry/virtualenvs/openhands-ai-QLt0qIPP-py3.12/bin/python \
+    /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh_local.py \
+    --run_id $MODEL \
+    --predictions_path $FINAL_PRED_PATH \
+    --output_dir $OUT_FINAL \
 
 ## ---------- Post-processing: ECHO LOCALIZATION FILTERED ----------
 
@@ -191,7 +201,7 @@ EVAL_JSON=$(echo "$EVAL_JSONLS" | head -n 1)
 echo "Running FILTERED LOCALIZATION:"
 cat >> "$EXEC_SCRIPT" << EOF
 python \\
-    /mlf11-shared/coding/test/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary_filtered.py \\
+    /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary_filtered.py \\
     --input_file "$JSONL_FILE" \\
     --output_dir "$TOOL_SUMMARY_OUTPUT" \\
     --loc_json "$LOC_JSONL_FILE" \\
@@ -202,7 +212,7 @@ EOF
 # Display what was written
 cat << EOF
 python \\
-    /mlf11-shared/coding/test/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary_filtered.py \\
+    /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary_filtered.py \\
     --input_file "$JSONL_FILE" \\
     --output_dir "$TOOL_SUMMARY_OUTPUT" \\
     --loc_json "$LOC_JSONL_FILE" \\
@@ -211,15 +221,38 @@ EOF
 
 echo -e "\n\n\n"
 
+/home/vscode/.cache/pypoetry/virtualenvs/openhands-ai-QLt0qIPP-py3.12/bin/python \
+    /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary_filtered.py \
+    --input_file "$JSONL_FILE" \
+    --output_dir "$TOOL_SUMMARY_OUTPUT" \
+    --loc_json "$LOC_JSONL_FILE" \
+    --eval_json "$EVAL_JSON"
+
 # Make the script executable
 chmod +x "$EXEC_SCRIPT"
 
 echo "Commands written to: $EXEC_SCRIPT"
 echo "To execute, run: $EXEC_SCRIPT"
 
+#### -------------------SUMMARY--------------------
+
+echo "python \\
+    /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/generate_run_summary.py \\
+    --input_file \"$JSONL_FILE\" \\
+    --eval_summary_file \"$EVAL_JSON\" \\
+    --localization_report \"$LOC_JSONL_FILE\""
+
+/home/vscode/.cache/pypoetry/virtualenvs/openhands-ai-QLt0qIPP-py3.12/bin/python \
+    /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/generate_run_summary.py \
+    --input_file "$JSONL_FILE" \
+    --eval_summary_file "$EVAL_JSON" \
+    --localization_report "$LOC_JSONL_FILE"
 
 
 
+echo "Summary report generated."
+
+cd /workspaces/OpenHands
 
 # # # ------------------------ PREVIOUS ------------------------
 # # # ---------- Post-processing: ECHO final eval script ----------

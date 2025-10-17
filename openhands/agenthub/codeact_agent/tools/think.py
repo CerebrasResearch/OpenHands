@@ -101,12 +101,83 @@ think(
 **Important:** Always complete your implementation plan before making any code changes. This ensures clarity and prevents scattered, incomplete modifications.
 """
 
+_THINK_DESCRIPTION_PLAN_BRAINSTORM_v2 = """A tool for structured thinking and planning before taking action.
+
+This tool operates in two distinct modes:
+
+## Mode 1: Brainstorm (mode: "brainstorm")
+Use for freeform thinking, analysis, and decision-making. This is your internal workspace for processing information.
+
+**When to use:**
+- Analyzing command outputs (e.g., after running `ls`, `grep`, `cat`)
+- Exploring solution approaches and weighing trade-offs
+- Formulating and testing hypotheses about bugs or issues
+- Deciding next steps based on gathered information
+
+## Mode 2: Implementation Plan (mode: "plan")
+**REQUIRED** before writing or modifying any code. Create a structured plan that clearly maps out your intended changes.
+
+**CRITICAL**:
+- You MUST respond using ONLY markdown format. Do not use JSON or other formats.
+
+**When to use:**
+You MUST use this mode before:
+- Creating new files or functions
+- Modifying existing code
+- Refactoring or restructuring code
+- Implementing bug fixes or features
+
+### Required Plan Structure:
+
+## Implementation Plan
+
+**Goal:** [One sentence describing what this change accomplishes]
+
+**Changes:**
+1. **File:** /path/to/file.py
+   **Target:** function or class name in file.py
+   **Modification:** Clear description of what will be changed or added in file.py
+
+2. **File:** /path/to/another_file.py
+   **Target:** function or class name in another_file
+   **Modification:** Clear description of what will be changed or added in another_file.py
+
+**Dependencies:**
+- [List all files that will be read and/or imported]
+- [List any external APIs or libraries used.]
+
+**Example Usage:**
+
+think(
+    mode='plan',
+    thought=\"\"\"
+    ## Implementation Plan
+
+    **Goal:** Add input validation to prevent empty password submissions in the login flow.
+
+    **Changes:**
+    1. **File:** `src/auth/core.py`
+       - **Target:** `login(username, password)` function
+       - **Modification:** Add validation at function entry to check for null/empty password and raise ValueError if invalid
+
+    2. **File:** `tests/auth/test_auth.py`
+       - **Target:** `TestAuth` class
+       - **Modification:** Add test method `test_login_empty_password_raises_error` to verify ValueError is raised for empty passwords
+
+    **Dependencies:**
+    - `src/utils/strops.py` (for `checkPassword()` function)
+    - Built-in `ValueError` exception
+    \"\"\"
+)
+
+**Important:** Always complete your implementation plan before making any code changes. This ensures clarity and prevents scattered, incomplete modifications. **STRICTLY** follow the required format.
+"""
 
 ThinkToolPlanBrainstorm = ChatCompletionToolParam(
     type='function',
     function=ChatCompletionToolParamFunctionChunk(
         name='think_plan_brainstorm',
-        description=_THINK_DESCRIPTION_PLAN_BRAINSTORM,
+        description=_THINK_DESCRIPTION_PLAN_BRAINSTORM_v2,
         parameters={
             'type': 'object',
             'properties': {

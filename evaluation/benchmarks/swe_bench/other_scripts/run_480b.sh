@@ -31,7 +31,8 @@ export EVAL_SKIP_MAXIMUM_RETRIES_EXCEEDED=true
 
 
 
-MODEL="llm.cerebras_qwen_480b"
+# MODEL="llm.cerebras_qwen_480b"
+MODEL="llm.together_qwen_480b"
 MAX_TURNS=100
 NUM_SAMPLES=200
 NUM_WORKERS=1
@@ -148,9 +149,9 @@ echo "" >> "$EXEC_SCRIPT"
 echo "Running trajectory evaluation:"
 cat >> "$EXEC_SCRIPT" << EOF
 cd $OUT_FINAL
-python /mlf11-shared/coding/test/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh.py \\
-  --run_id $MODEL \\
-  --predictions_path $FINAL_PRED_PATH \\
+python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh_local.py \\
+  --run_id $OUT \\
+  --predictions_path $SWEBENCH_JSONL \\
   --output_dir $OUT_FINAL
 
 EOF
@@ -158,7 +159,7 @@ EOF
 # Display what was written
 cat << EOF
 cd $OUT_FINAL
-python /mlf11-shared/coding/test/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh.py \\
+python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh_local.py \\
   --run_id $MODEL \\
   --predictions_path $FINAL_PRED_PATH \\
   --output_dir $OUT_FINAL
@@ -192,7 +193,7 @@ EVAL_JSON=$(echo "$EVAL_JSONLS" | head -n 1)
 echo "Running FILTERED LOCALIZATION:"
 cat >> "$EXEC_SCRIPT" << EOF
 python \\
-    /mlf11-shared/coding/test/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary_filtered.py \\
+    /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary_filtered.py \\
     --input_file "$JSONL_FILE" \\
     --output_dir "$TOOL_SUMMARY_OUTPUT" \\
     --loc_json "$LOC_JSONL_FILE" \\
@@ -203,7 +204,7 @@ EOF
 # Display what was written
 cat << EOF
 python \\
-    /mlf11-shared/coding/test/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary_filtered.py \\
+    /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary_filtered.py \\
     --input_file "$JSONL_FILE" \\
     --output_dir "$TOOL_SUMMARY_OUTPUT" \\
     --loc_json "$LOC_JSONL_FILE" \\
