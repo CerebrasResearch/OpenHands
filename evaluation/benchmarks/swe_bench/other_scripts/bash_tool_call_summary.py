@@ -383,7 +383,7 @@ def filter_entries(input_file, search_text_groups, output_dir, metadata_dir, sum
             json.dump(filtered_entries, json_outfile, indent=4)
         logger.info(f"Filtered entries saved to: {json_output_file}")
 
-
+        print(f"---- Evaluating summaries for group: {group_name} {len(filtered_entries)}")
         summary = summary_file(group_name, filtered_entries, summary_dir, logger)
 
         plot_histograms(summary, group_name, output_dir)

@@ -108,7 +108,7 @@ def analyse_entry(instance_id, gen_patch):
     oracle_instance = oracle_ds.filter(lambda x: x['instance_id'] == instance_id)[0]
     oracle_patch = oracle_instance['patch']
 
-    print(f" Analysing {instance_id} --- {gen_patch} -- {oracle_patch}")
+    print(f" Analysing {instance_id} ---")
 
     files_modified_by_patch = extract_files_from_patch(gen_patch)
     files_needed_to_be_modified = extract_files_from_patch(oracle_patch)

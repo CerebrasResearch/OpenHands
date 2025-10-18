@@ -22,7 +22,7 @@ class SWEBenchEvaluator:
         self.predictions_path = predictions_path
         self.output_dir = Path(output_dir)
         # self.docker_image_dir = "/mlf3-shared/sapankumars/swe_docker_images"
-        self.parent_docker_image_dir = "/workspaces/OpenHands/swebench_dockers_for_eval"
+        self.parent_docker_image_dir = "/workspaces/Openhands/swebench_dockers_for_eval"
         # self.instance_ids_file = "/workspaces/OpenHands/problem_list.txt"
         dockers_dict = {
             "princeton-nlp/SWE-bench_dev": os.path.join(self.parent_docker_image_dir, "swebench_dockers/dev/docker_images"),
