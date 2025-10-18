@@ -17,7 +17,7 @@
 		"DOCKER_HOST_ADDR": "host.docker.internal"
 	},
 	"mounts": [
-		"source=/mlf11-shared/swebench_dockers_for_eval,target=/workspaces/OpenHands/swebench_dockers_for_eval,type=bind,consistency=cached"
+		"source=/mlf11-shared/swebench_dockers_for_eval,target=/workspaces/Openhands/swebench_dockers_for_eval,type=bind,consistency=cached"  // the Openhands instead of OpenHands is intentional, due to file mounting issues
 	],
 	"customizations": {
         "vscode": {
