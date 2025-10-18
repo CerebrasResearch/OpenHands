@@ -109,15 +109,58 @@ TOOL_SUMMARY_OUTPUT="$PARENT_FOLDER/bash_tool_call_summary_$MODEL"
 
 echo "Tool call summary saved to $TOOL_SUMMARY_OUTPUT"
 
-## ---------- Post-processing: RUN EVAL ----------
+# ## ---------- Post-processing: RUN EVAL ----------
 
-DEBUG=1 /workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/eval_infer.sh \
-    $JSONL_FILE \
-    "" \
-    $DATASET \
-    $SPLIT
+# DEBUG=1 /workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/eval_infer.sh \
+#     $JSONL_FILE \
+#     "" \
+#     $DATASET \
+#     $SPLIT
 
-echo "Final evaluation completed."
+# echo "Final evaluation completed."
+
+#### ------------ Post processing - generate output.swebench.jsonl ------------
+
+# SWE-bench format is a JSONL where every line has three fields: model_name_or_path, instance_id, and model_patch
+function is_swebench_format() {
+    # Read the first line of the file
+    read -r first_line < "$JSONL_FILE"
+
+    # Use jq to check if the first line has the required fields
+    echo "$first_line" | jq -e '. | has("model_name_or_path") and has("instance_id") and has("model_patch")' > /dev/null
+
+    if [ $? -ne 0 ]; then
+        return 1 # Return 1 if the first line does not have the required fields
+    fi
+
+    return 0 # Return 0 if the first line has the required fields
+}
+
+# Call the function with the file path
+is_swebench_format "$JSONL_FILE"
+FILE_DIR=$(dirname $JSONL_FILE)
+IS_SWEBENCH_FORMAT=$?
+# Use the result in an if-else statement
+if [ $IS_SWEBENCH_FORMAT -eq 0 ]; then
+    echo "The file IS in SWE-bench format."
+    SWEBENCH_FORMAT_JSONL=$JSONL_FILE
+else
+    echo "The file IS NOT in SWE-bench format."
+
+    # ==== Convert OH format to SWE-bench format ====
+    echo "Merged output file with fine-grained report will be saved to $FILE_DIR"
+    poetry run python3 evaluation/benchmarks/swe_bench/scripts/eval/convert_oh_output_to_swe_json.py $PROCESS_FILEPATH
+    # replace .jsonl with .swebench.jsonl in filename
+    SWEBENCH_FORMAT_JSONL=${JSONL_FILE/.jsonl/.swebench.jsonl}
+    echo "SWEBENCH_FORMAT_JSONL: $SWEBENCH_FORMAT_JSONL"
+    # assert that the file exists
+    if [ ! -f $SWEBENCH_FORMAT_JSONL ]; then
+        echo "Error: $SWEBENCH_FORMAT_JSONL does not exist. There is probably an error in the conversion process."
+        exit 1
+    fi
+    SWEBENCH_FORMAT_JSONL=$(realpath $SWEBENCH_FORMAT_JSONL)
+fi
+# ================================================
 
 
 ## ---------- Post-processing: RUN LOCALIZATION ----------
