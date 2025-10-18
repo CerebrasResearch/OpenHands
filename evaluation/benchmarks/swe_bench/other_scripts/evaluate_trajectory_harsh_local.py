@@ -17,19 +17,28 @@ import re
 
 
 class SWEBenchEvaluator:
-    def __init__(self, run_id: str, predictions_path: str, output_dir: str = "output"):
+    def __init__(self, run_id: str, predictions_path: str, output_dir: str = "output", dataset_name: str = "princeton-nlp/SWE-bench", dataset_split="dev"):
         self.run_id = run_id
         self.predictions_path = predictions_path
         self.output_dir = Path(output_dir)
         # self.docker_image_dir = "/mlf3-shared/sapankumars/swe_docker_images"
-        self.docker_image_dir = "/workspaces/Openhands/docker_images"
-        self.instance_ids_file = "/workspaces/OpenHands/problem_list.txt"
+        self.parent_docker_image_dir = "/workspaces/OpenHands/swebench_dockers_for_eval"
+        # self.instance_ids_file = "/workspaces/OpenHands/problem_list.txt"
+        dockers_dict = {
+            "princeton-nlp/SWE-bench_dev": os.path.join(self.parent_docker_image_dir, "swebench_dockers/dev/docker_images"),
+            "princeton-nlp/SWE-bench_test": os.path.join(self.parent_docker_image_dir, "swebench_dockers/test/docker_images"),
+            "princeton-nlp/SWE-bench_train": os.path.join(self.parent_docker_image_dir, "swebench_dockers/train/docker_images"),
+            "princeton-nlp/SWE-bench_Verified_dev": os.path.join(self.parent_docker_image_dir, "swebench_verified_dockers/dev/docker_images"),
+        }
+        self.docker_image_dir = dockers_dict[f"{dataset_name}_{dataset_split}"]
 
         # Create output directory if it doesn't exist
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Setup logging
         self.setup_logging()
+        self.dataset_name = dataset_name
+        self.dataset_split = dataset_split
 
         # Results tracking
         self.results = []
@@ -111,13 +120,12 @@ class SWEBenchEvaluator:
                             self.logger.warning(f"Invalid JSON line in predictions file: {line.strip()}")
 
 
-            self.logger.info(f"Loaded {len(instance_ids)} instance IDs from {self.instance_ids_file}")
             return instance_ids
         except FileNotFoundError:
-            self.logger.error(f"Instance IDs file not found: {self.instance_ids_file}")
+            self.logger.error(f"predictions_path file not found: {self.predictions_path}")
             sys.exit(1)
         except Exception as e:
-            self.logger.error(f"Error reading instance IDs file: {e}")
+            self.logger.error(f"Error reading predictions_path: {e}")
             sys.exit(1)
 
     def load_docker_image(self, instance_id: str) -> tuple[bool, str]:
@@ -213,14 +221,14 @@ class SWEBenchEvaluator:
 
         cmd = [
             "python", "-m", "swebench.harness.run_evaluation",
-            "--dataset_name", "princeton-nlp/SWE-bench",
+            "--dataset_name", f"{self.dataset_name}",
             "--max_workers", "15",
             "--cache_level", "none",
             "--clean", "True",
             "--predictions_path", self.predictions_path,
             "--run_id", self.run_id,
             "--instance_ids", instance_id,
-            "--split", "dev"
+            "--split", f"{self.dataset_split}"
         ]
 
         self.logger.info(f"Running evaluation for {instance_id}")
@@ -471,6 +479,9 @@ def main():
     parser.add_argument("--run_id", required=True, help="Run ID for the evaluation")
     parser.add_argument("--predictions_path", required=True, help="Path to predictions file")
     parser.add_argument("--output_dir", default="output", help="Output directory for logs and reports (default: output)")
+    parser.add_argument("--dataset_name", default="princeton-nlp/SWE-bench", help="Dataset name for SWE-bench (default: princeton-nlp/SWE-bench)")
+    parser.add_argument("--dataset_split", default="dev", help="Dataset name for SWE-bench (default: dev)")
+
 
     args = parser.parse_args()
 
@@ -483,7 +494,7 @@ def main():
         parser.error(f"Predictions path does not exist: {args.predictions_path}")
 
     # Create and run evaluator
-    evaluator = SWEBenchEvaluator(args.run_id, args.predictions_path, args.output_dir)
+    evaluator = SWEBenchEvaluator(args.run_id, args.predictions_path, args.output_dir, args.dataset_name, args.dataset_split)
     evaluator.run()
 
 

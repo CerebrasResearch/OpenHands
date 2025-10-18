@@ -159,7 +159,9 @@ cd $OUT_FINAL
 python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh_local.py \\
   --run_id $MODEL \\
   --predictions_path $FINAL_PRED_PATH \\
-  --output_dir $OUT_FINAL
+  --output_dir $OUT_FINAL \\
+  --dataset_name $DATASET \\
+  --dataset_split $SPLIT
 
 EOF
 
@@ -170,6 +172,8 @@ python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evalu
   --run_id $MODEL \\
   --predictions_path $FINAL_PRED_PATH \\
   --output_dir $OUT_FINAL
+  --dataset_name $DATASET \\
+  --dataset_split $SPLIT
 EOF
 
 echo -e "\n\n\n"
@@ -181,6 +185,8 @@ cd $OUT_FINAL
     --run_id $MODEL \
     --predictions_path $FINAL_PRED_PATH \
     --output_dir $OUT_FINAL \
+    --dataset_name $DATASET \
+    --dataset_split $SPLIT
 
 ## ---------- Post-processing: ECHO LOCALIZATION FILTERED ----------
 
@@ -254,8 +260,6 @@ echo "python \\
     --input_file "$JSONL_FILE" \
     --eval_summary_file "$EVAL_JSON" \
     --localization_report "$LOC_JSONL_FILE"
-
-
 
 echo "Summary report generated."
 
