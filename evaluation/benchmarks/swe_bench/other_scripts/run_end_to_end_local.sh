@@ -38,10 +38,11 @@ THINK_PLAN=$8
 STR_REPL_THINK=$9
 MODEL=${10:-"llm.qwen_coder_30b_small"}
 LOCAL_DOCKER_DIR=${11}
-MAX_TURNS=${12:-100}
-NUM_SAMPLES=${13:-200}
-DATASET=${14:-"princeton-nlp/SWE-bench"}
-SPLIT=${15:-"dev"}
+CONFIG_ML=${12}
+MAX_TURNS=${13:-100}
+NUM_SAMPLES=${14:-200}
+DATASET=${15:-"princeton-nlp/SWE-bench"}
+SPLIT=${16:-"dev"}
 # DATASET="princeton-nlp/SWE-bench_Verified"
 # SPLIT="test"
 
@@ -63,6 +64,7 @@ export INSTRUCTION_TEMPLATE_NAME=$TEMPLATE_NAME
 export DEBUG=1
 export EVAL_SKIP_MAXIMUM_RETRIES_EXCEEDED=true
 export LOCAL_DOCKER_IMAGE_DIR=$LOCAL_DOCKER_DIR
+export CONFIG_ML=$CONFIG_ML
 
 ##########################
 # ----- CONFIG LOG ------#

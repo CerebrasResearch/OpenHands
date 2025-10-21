@@ -80,6 +80,7 @@ ENABLE_CODE_COMMENTS = os.environ.get('ENABLE_CODE_COMMENTS', 'false').lower() =
 THINK_PLAN_BRAINSTORM = os.environ.get('THINK_PLAN_BRAINSTORM', 'false').lower() == 'true'
 ENABLE_STR_REPLACE_EDIT_THINK_CHECK = os.environ.get('ENABLE_STR_REPLACE_EDIT_THINK_CHECK', 'false').lower() == 'true'
 LOCAL_DOCKER_IMAGE_DIR = os.environ.get('LOCAL_DOCKER_IMAGE_DIR', '')
+CONFIG_ML = os.environ.get('CONFIG_ML', '')
 
 INDEX_BASE_DIR = os.environ.get('INDEX_BASE_DIR', '')  # For LocAgent
 BenchMode = Literal['swe', 'swt', 'swt-ci']
@@ -848,7 +849,12 @@ def process_instance(
 
 
 def filter_dataset(dataset: pd.DataFrame, filter_column: str) -> pd.DataFrame:
-    file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.toml')
+    if not CONFIG_ML:
+        file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.toml')
+        logger.info(f"DEFAULT: Loading {file_path} for filtering dataset...")
+    else:
+        file_path = CONFIG_ML
+        logger.info(f"CONFIG ML: Loading {file_path} for filtering dataset...")
     if os.path.exists(file_path):
         with open(file_path, 'r') as file:
             data = toml.load(file)

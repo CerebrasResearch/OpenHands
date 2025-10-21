@@ -69,20 +69,20 @@ echo "------------------------------------------------------"
 
 
 
-/workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer.sh \
-    $MODEL \
-    HEAD \
-    CodeActAgent \
-    $NUM_SAMPLES \
-    $MAX_TURNS \
-    $NUM_WORKERS \
-    $DATASET \
-    $SPLIT \
-    $NUM_RUNS \
-    swe
+# /workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer.sh \
+#     $MODEL \
+#     HEAD \
+#     CodeActAgent \
+#     $NUM_SAMPLES \
+#     $MAX_TURNS \
+#     $NUM_WORKERS \
+#     $DATASET \
+#     $SPLIT \
+#     $NUM_RUNS \
+#     swe
 
 
-echo "Evaluation completed. Results are saved in $EVAL_OUTPUT_DIR."
+# echo "Evaluation completed. Results are saved in $EVAL_OUTPUT_DIR."
 
 
 ## ---------- Post-processing: Summarize tool calls ----------
@@ -100,6 +100,15 @@ echo "Selected JSONL file: $JSONL_FILE"
 
 PARENT_FOLDER=$(dirname "$JSONL_FILE")
 TOOL_SUMMARY_OUTPUT="$PARENT_FOLDER/bash_tool_call_summary_$MODEL"
+
+echo "-----------------------------"
+
+echo "/home/vscode/.cache/pypoetry/virtualenvs/openhands-ai-QLt0qIPP-py3.12/bin/python \
+    /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary.py \
+    --input_file \"$JSONL_FILE\" \
+    --output_dir \"$TOOL_SUMMARY_OUTPUT\""
+
+echo "-----------------------------"
 
 /home/vscode/.cache/pypoetry/virtualenvs/openhands-ai-QLt0qIPP-py3.12/bin/python \
     /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary.py \

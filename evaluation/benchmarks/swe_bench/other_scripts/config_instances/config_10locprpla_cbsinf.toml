@@ -1,0 +1,15 @@
+# https://cerebras.slack.com/archives/D06EHNYCVDK/p1760802015847749
+# 10/50 hard dev set - SWE-Bench
+
+selected_ids = [
+    "pvlib__pvlib-python-1478",
+    "sqlfluff__sqlfluff-891",
+    "pylint-dev__astroid-1030",
+    "pydicom__pydicom-1017",
+    "marshmallow-code__marshmallow-1229",
+    "pvlib__pvlib-python-1033",
+    "pylint-dev__astroid-1741",
+    "pvlib__pvlib-python-1181",
+    "pyvista__pyvista-4226",
+    "pyvista__pyvista-4225",
+]
