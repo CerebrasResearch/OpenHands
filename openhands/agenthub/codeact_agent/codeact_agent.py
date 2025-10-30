@@ -3,8 +3,6 @@ import sys
 from collections import deque
 from typing import TYPE_CHECKING
 import random
-import re
-from dataclasses import dataclass
 
 from openhands.llm.llm_registry import LLMRegistry
 
@@ -34,7 +32,7 @@ from openhands.controller.agent import Agent
 from openhands.controller.state.state import State
 from openhands.core.config import AgentConfig
 from openhands.core.logger import openhands_logger as logger
-from openhands.core.message import Message, TextContent
+from openhands.core.message import Message
 from openhands.events.action import AgentFinishAction, MessageAction
 from openhands.events.event import Event, EventSource
 from openhands.llm.llm_utils import check_tools
@@ -47,30 +45,7 @@ from openhands.runtime.plugins import (
     PluginRequirement,
 )
 from openhands.utils.prompt import PromptManager
-from openhands.events.action.agent import AgentThinkAction
-from openhands.core.exceptions import (
-    FunctionCallNotExistsError,
-    FunctionCallValidationError,
-)
 
-
-
-# Optional: in the long run, move this into AgentConfig
-@dataclass
-class AutoReflectionConfig:
-    enabled: bool = True
-    # Probabilistic trigger: after each observation event, fire with probability `prob`
-    prob: float = 0.10
-    # Reactive trigger: check last turn for "no tool" or "error observation"
-    reactive_enabled: bool = True
-    # How many past events to consider for the “last N steps” wording
-    lookback_window: int = 5
-    # The seeded thought text; {n} is formatted with lookback_window
-    prompt: str = (
-        "Look back at the last {n} steps. Are you making good progress, or should you "
-        "step back and reconsider your approach? If you're off-track, propose "
-        "concrete adjustments and the single next best action/tool to try."
-    )
 
 
 class CodeActAgent(Agent):
@@ -130,7 +105,18 @@ class CodeActAgent(Agent):
         # NOTE: reflection
         self._num_steps = 0
         self._last_reflection_step = -1
-        self.auto_reflect = AutoReflectionConfig()
+        self.auto_reflect_enabled = os.getenv("AUTO_REFLECTION_ENABLED", "true").lower() == "true"
+        self.auto_reflect_prob = float(os.getenv("AUTO_REFLECTION_PROB", "0.10"))
+        self.auto_reflect_reactive = os.getenv("AUTO_REFLECTION_REACTIVE_ENABLED", "true").lower() == "true"
+        self.auto_reflect_lookback = int(os.getenv("AUTO_REFLECTION_LOOKBACK_WINDOW", "5"))
+        self.auto_reflect_prompt = os.getenv(
+            "AUTO_REFLECTION_PROMPT",
+            (
+                "Look back at the last {n} steps. Are you making good progress, or should you "
+                "step back and reconsider your approach? If you're off-track, propose "
+                "concrete adjustments and the single next best action/tool to try."
+            ),
+        )
 
     @property
     def prompt_manager(self) -> PromptManager:
@@ -237,8 +223,8 @@ class CodeActAgent(Agent):
         )
 
         # NOTE: reflection case 2: Revisit last observation to catch if there is tool call failures
-        if self.auto_reflect.enabled:
-            if self.auto_reflect.reactive_enabled:
+        if self.auto_reflect_enabled:
+            if self.auto_reflect_reactive:
                 is_last_turn_tool_error, tool_call_error_message =self._last_turn_has_tool_error(condensed_history)
                 if is_last_turn_tool_error and not self._last_action_is_think(condensed_history):
                     self.pending_actions.clear() # clear the queue
@@ -246,19 +232,19 @@ class CodeActAgent(Agent):
                     self._last_reflection_step = self._num_steps
                     return self._emit_reflection(f"I encountered a tool call with the following error: {tool_call_error_message}. \nI need to think about it and propose concrete adjustments plus the single next best action/tool.")
 
-            # # NOTE: reflection case 1: Probablistically do general last N step reflection
-            # # Let's do not break any pending actions
-            # # Also make sure the last action was not think
-            # if random.random() < self.auto_reflect.prob and \
-            #     not self.pending_actions and \
-            #     self._last_reflection_step != self._num_steps and \
-            #     not self._last_action_is_think(condensed_history):
+            # NOTE: reflection case 1: Probablistically do general last N step reflection
+            # Let's do not break any pending actions
+            # Also make sure the last action was not think
+            if random.random() < self.auto_reflect_prob and \
+                not self.pending_actions and \
+                self._last_reflection_step != self._num_steps and \
+                not self._last_action_is_think(condensed_history):
 
-            #     self._num_steps += 1
-            #     self._last_reflection_step = self._num_steps
-            #     return self._emit_reflection(
-            #         self.auto_reflect.prompt.format(n=self.auto_reflect.lookback_window)
-            #     )
+                self._num_steps += 1
+                self._last_reflection_step = self._num_steps
+                return self._emit_reflection(
+                    self.auto_reflect_prompt.format(n=self.auto_reflect_lookback)
+                )
 
         # Continue with pending actions if any
         if self.pending_actions:
@@ -291,7 +277,7 @@ class CodeActAgent(Agent):
         # NOTE: reflection case 3: cope with tool parse failures
         except Exception as e:
             # Wrong tool parsing will be raised by response_to_actions in function_calling.py
-            if self.auto_reflect.enabled:
+            if self.auto_reflect_enabled:
                 self._last_reflection_step = self._num_steps
                 self._num_steps += 1
                 return self._emit_reflection(

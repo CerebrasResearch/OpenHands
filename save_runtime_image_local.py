@@ -59,41 +59,41 @@ for instance_name in tqdm(instance_names):
             else:
                 print(f"⚠️ Found existing tar for {instance_name} but it’s invalid → rebuilding")
 
-    # # --- Build with retries ---
-    # for attempt in range(1, MAX_RETRIES + 1):
-    #     try:
-    #         image_name = build_runtime_image(
-    #             base_image_name,
-    #             docker_builder,
-    #             platform=None,
-    #             enable_browser=True,
-    ##             build_folder=build_folder,
-    #         )
-    #         print(f"Built image: {image_name}")
+    # --- Build with retries ---
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            image_name = build_runtime_image(
+                base_image_name,
+                docker_builder,
+                platform=None,
+                enable_browser=True,
+    #             build_folder=build_folder,
+            )
+            print(f"Built image: {image_name}")
 
-    #         os.makedirs(output_dir, exist_ok=True)
-    #         safe_image_name = image_name.split("/")[-1].split(":")[-1]
-    #         tar_path = os.path.join(output_dir, f"{safe_image_name}.tar")
+            os.makedirs(output_dir, exist_ok=True)
+            safe_image_name = image_name.split("/")[-1].split(":")[-1]
+            tar_path = os.path.join(output_dir, f"{safe_image_name}.tar")
 
-    #         print(f"Saving image to {tar_path} ...")
-    #         subprocess.run(["docker", "save", "-o", tar_path, image_name], check=True)
-    #         print(f"✅ Image saved to: {tar_path}")
-    #         print(f"🧹 Removing local image {image_name} to free disk space...")
-    #         try:
-    #             client.images.remove(image=image_name, force=True, noprune=False)
-    #             print(f"✅ Removed image: {image_name}")
-    #             subprocess.run(
-    #                 ["bash", "/workspaces/OpenHands/clean_docker.sh"]
-    #             )
-    #         except Exception as e:
-    #             print(f"⚠️ Could not remove image {image_name}: {e}")
+            print(f"Saving image to {tar_path} ...")
+            subprocess.run(["docker", "save", "-o", tar_path, image_name], check=True)
+            print(f"✅ Image saved to: {tar_path}")
+            print(f"🧹 Removing local image {image_name} to free disk space...")
+            try:
+                client.images.remove(image=image_name, force=True, noprune=False)
+                print(f"✅ Removed image: {image_name}")
+                subprocess.run(
+                    ["bash", "/workspaces/OpenHands/clean_docker.sh"]
+                )
+            except Exception as e:
+                print(f"⚠️ Could not remove image {image_name}: {e}")
 
-    #         break  # success → exit retry loop
+            break  # success → exit retry loop
 
-    #     except Exception as e:
-    #         print(f"⚠️ Build failed for {instance_name} (attempt {attempt}/{MAX_RETRIES}): {e}")
-    #         if attempt < MAX_RETRIES:
-    #             print(f"Retrying in {RETRY_DELAY} seconds...")
-    #             time.sleep(RETRY_DELAY)
-    #         else:
-    #             print(f"❌ Giving up on {instance_name} after {MAX_RETRIES} attempts.")
+        except Exception as e:
+            print(f"⚠️ Build failed for {instance_name} (attempt {attempt}/{MAX_RETRIES}): {e}")
+            if attempt < MAX_RETRIES:
+                print(f"Retrying in {RETRY_DELAY} seconds...")
+                time.sleep(RETRY_DELAY)
+            else:
+                print(f"❌ Giving up on {instance_name} after {MAX_RETRIES} attempts.")
