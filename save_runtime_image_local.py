@@ -18,7 +18,7 @@ def instance_id_to_remote_name(instance_id):
 
 base_image_dir = "/workspaces/Openhands/swebench_dockers_for_eval/swebench_dockers/dev/docker_images"
 output_root = "/workspaces/Openhands/swebench_dockers_for_eval/runtime_dockers/swebench_dev"
-build_folder = "/workspaces/Openhands/michaelw/build_folder"
+# build_folder = "/workspaces/Openhands/michaelw/build_folder"
 
 tar_files = [f for f in os.listdir(base_image_dir) if f.endswith('.tar')]
 # instance_names = [f.removesuffix('__latest.tar') for f in tar_files]
@@ -45,8 +45,8 @@ def is_valid_tar(path: str) -> bool:
 for instance_name in tqdm(instance_names):
     base_image_name = instance_id_to_remote_name(instance_name)
     output_dir = os.path.join(output_root, instance_name)
-    shutil.rmtree(build_folder, ignore_errors=True)
-    os.makedirs(build_folder, exist_ok=True)
+    # shutil.rmtree(build_folder, ignore_errors=True)
+    # os.makedirs(build_folder, exist_ok=True)
 
     # --- Skip if valid tar already exists ---
     if os.path.isdir(output_dir):
@@ -67,7 +67,7 @@ for instance_name in tqdm(instance_names):
     #             docker_builder,
     #             platform=None,
     #             enable_browser=True,
-    #             build_folder=build_folder,
+    ##             build_folder=build_folder,
     #         )
     #         print(f"Built image: {image_name}")
 

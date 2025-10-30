@@ -26,15 +26,21 @@ echo "📁 Log file: $LOGFILE"
 echo "========================================"
 
 
+export TMPDIR=/workspaces/Openhands/runtime_dockers/temp_swebench
+export DOCKER_TMPDIR=/workspaces/Openhands/runtime_dockers/temp_swebench
+export TEMP=/workspaces/Openhands/runtime_dockers/temp_swebench
+export TMP=/workspaces/Openhands/runtime_dockers/temp_swebench
+
+
 ##########################
 # ----- ARGUMENTS -------#
 ##########################
-EVAL_OUTPUT_DIR="/workspaces/OpenHands/evaluation/evaluation_outputs/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_26_baseline/"
+EVAL_OUTPUT_DIR="/workspaces/OpenHands/evaluation/evaluation_outputs/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_176_reflection_no_prob/"
 MODEL="llm.qwen_coder_30b_small"
 LOCAL_DOCKER_DIR="/workspaces/Openhands/swebench_dockers_for_eval/swebench_dockers/dev/docker_images/"
 CONFIG_ML="/workspaces/OpenHands/evaluation/benchmarks/swe_bench/config_2.toml"
 MAX_TURNS=100
-NUM_SAMPLES=26
+NUM_SAMPLES=176
 DATASET="princeton-nlp/SWE-bench"
 SPLIT="dev"
 # DATASET="princeton-nlp/SWE-bench_Verified"

@@ -58,7 +58,7 @@ from openhands.core.exceptions import (
 # Optional: in the long run, move this into AgentConfig
 @dataclass
 class AutoReflectionConfig:
-    enabled: bool = False
+    enabled: bool = True
     # Probabilistic trigger: after each observation event, fire with probability `prob`
     prob: float = 0.10
     # Reactive trigger: check last turn for "no tool" or "error observation"
@@ -246,19 +246,19 @@ class CodeActAgent(Agent):
                     self._last_reflection_step = self._num_steps
                     return self._emit_reflection(f"I encountered a tool call with the following error: {tool_call_error_message}. \nI need to think about it and propose concrete adjustments plus the single next best action/tool.")
 
-            # NOTE: reflection case 1: Probablistically do general last N step reflection
-            # Let's do not break any pending actions
-            # Also make sure the last action was not think
-            if random.random() < self.auto_reflect.prob and \
-                not self.pending_actions and \
-                self._last_reflection_step != self._num_steps and \
-                not self._last_action_is_think(condensed_history):
+            # # NOTE: reflection case 1: Probablistically do general last N step reflection
+            # # Let's do not break any pending actions
+            # # Also make sure the last action was not think
+            # if random.random() < self.auto_reflect.prob and \
+            #     not self.pending_actions and \
+            #     self._last_reflection_step != self._num_steps and \
+            #     not self._last_action_is_think(condensed_history):
 
-                self._num_steps += 1
-                self._last_reflection_step = self._num_steps
-                return self._emit_reflection(
-                    self.auto_reflect.prompt.format(n=self.auto_reflect.lookback_window)
-                )
+            #     self._num_steps += 1
+            #     self._last_reflection_step = self._num_steps
+            #     return self._emit_reflection(
+            #         self.auto_reflect.prompt.format(n=self.auto_reflect.lookback_window)
+            #     )
 
         # Continue with pending actions if any
         if self.pending_actions:

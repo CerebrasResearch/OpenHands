@@ -6,6 +6,6 @@ while read -r id; do
     docker rmi "$id" 2>/dev/null || true
   fi
 done
-docker image prune -f; docker builder prune -f; docker volume prune -f
+docker image prune -f; docker builder prune -f; docker volume prune -f;
 
 docker system prune -a -f --volumes;

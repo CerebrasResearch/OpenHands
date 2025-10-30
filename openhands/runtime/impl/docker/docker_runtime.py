@@ -14,7 +14,8 @@ from docker.models.containers import Container
 from docker.types import DriverConfig, Mount
 from docker.errors import NotFound
 
-import json, tarfile, time
+import json, tarfile, time, re
+from typing import Tuple
 
 from openhands.core.config import OpenHandsConfig
 from openhands.core.exceptions import (
@@ -271,9 +272,9 @@ class DockerRuntime(ActionExecutionClient):
         # make sure you created the client with a large timeout somewhere:
         # self.docker_client = docker.from_env(timeout=DOCKER_TIMEOUT_SECS)
 
-        repo, index = self.get_info_from_base_image()
-        runtime_docker_image_folder = self.find_folder_by_prefix_suffix(
-            repo, index, "/workspaces/Openhands/swebench_dockers_for_eval/runtime_dockers/swebench_dev/"
+        repo, name = self.get_info_from_base_image()
+        runtime_docker_image_folder = self.find_folder_by_repo_name(
+            repo, name, "/workspaces/Openhands/runtime_dockers/swebench_dev/"
         )
         tar_files = glob.glob(os.path.join(runtime_docker_image_folder, "*.tar"))
         if not tar_files:
@@ -344,11 +345,13 @@ class DockerRuntime(ActionExecutionClient):
             )
 
 
-    def find_folder_by_prefix_suffix(self, input_a, input_b, search_dir):
+    def find_folder_by_repo_name(self, repo, name, search_dir):
         matches = []
         for p in Path(search_dir).iterdir():
-            if p.is_dir() and p.name.startswith(input_a) and p.name.endswith(input_b):
-                matches.append(p)
+            if p.is_dir():
+                folder_repo, folder_name = p.name.split("__")
+                if folder_repo == repo and folder_name == name:
+                    matches.append(p)
 
         if matches:
             print("✅ Found matching folder(s):")
@@ -360,15 +363,16 @@ class DockerRuntime(ActionExecutionClient):
 
 
 
+
     def get_info_from_base_image(self):
         if self.base_container_image.startswith("docker.io"):
-            repo = self.base_container_image.split(":")[0].split("/")[-1].split(".")[-1].split("__")[0]
-            index = self.base_container_image.split(":")[0].split("/")[-1].split(".")[-1].split("-")[-1]
-            return repo, index
+            repo = self.base_container_image.split(":")[0].split("/")[-1].split(".")[-1].split("_1776_")[0]
+            name = self.base_container_image.split(":")[0].split("/")[-1].split(".")[-1].split("_1776_")[1]
+            return repo, name
         elif self.base_container_image.startswith("openhands_local"):
-            repo = self.base_container_image.split(":")[0].split("-")[0].split("_")[-1]
-            index = self.base_container_image.split(":")[0].split("-")[-1]
-            return repo, index
+            repo = self.base_container_image.split(":")[0].split("openhands_local_")[1].split("__")[0]
+            name = self.base_container_image.split(":")[0].split("openhands_local_")[1].split("__")[1]
+            return repo, name
         else:
             raise ValueError(
                     'This base_container_image is not available either on the cloud or locally'

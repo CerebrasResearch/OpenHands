@@ -18,7 +18,7 @@
 	},
 	"mounts": [
 		"source=/mlf11-shared/swebench_dockers_for_eval,target=/workspaces/Openhands/swebench_dockers_for_eval,type=bind,consistency=cached",  // the Openhands instead of OpenHands is intentional, due to file mounting issues
-		"source=/mlf15-shared/michaelw,target=/workspaces/Openhands/michaelw,type=bind,consistency=cached"  // the Openhands instead of OpenHands is intentional, due to file mounting issues
+		"source=/mlf14-shared/michaelw/runtime_dockers,target=/workspaces/Openhands/runtime_dockers,type=bind,consistency=cached"  // the Openhands instead of OpenHands is intentional, due to file mounting issues
 	],
 	"customizations": {
         "vscode": {

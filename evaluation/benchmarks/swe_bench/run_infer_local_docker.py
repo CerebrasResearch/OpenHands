@@ -252,8 +252,10 @@ def get_config(
     )
 
     if LOCAL_DOCKER_IMAGE_DIR:
-        logger.info(f"Loading Local Docker")
-        base_container_image = load_local_image_if_needed(base_container_image, custom_tag= f"openhands_local_{instance['instance_id'].split('__')[1]}:latest")
+        logger.info(f"Loading Local Docker (getting names only, not actually loading image to memory)")
+        base_container_image = f"openhands_local_{instance['instance_id']}:latest"
+        # base_container_image = load_local_image_if_needed(base_container_image, custom_tag= f"openhands_local_{instance['instance_id']}:latest")
+        # base_container_image = load_local_image_if_needed(base_container_image, custom_tag= f"openhands_local_{instance['instance_id'].split('__')[1]}:latest")
         logger.info(
             f'Using LOCAL docker image for instance {instance["instance_id"]}: {base_container_image}'
         )
