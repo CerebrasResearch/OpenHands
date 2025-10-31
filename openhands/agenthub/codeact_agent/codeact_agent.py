@@ -103,8 +103,6 @@ class CodeActAgent(Agent):
         self.llm = self.llm_registry.get_router(self.config)
 
         # NOTE: reflection
-        self._num_steps = 0
-        self._last_reflection_step = -1
         self.auto_reflect_enabled = os.getenv("AUTO_REFLECTION_ENABLED", "true").lower() == "true"
         self.auto_reflect_prob = float(os.getenv("AUTO_REFLECTION_PROB", "0.10"))
         self.auto_reflect_reactive = os.getenv("AUTO_REFLECTION_REACTIVE_ENABLED", "true").lower() == "true"
@@ -180,9 +178,6 @@ class CodeActAgent(Agent):
         super().reset()
         # Only clear pending actions, not LLM metrics
         self.pending_actions.clear()
-        # NOTE: reflection
-        self._num_steps = 0
-        self._last_reflection_step = -1
 
     def step(self, state: State) -> 'Action':
         """Performs one step using the CodeAct Agent.
@@ -210,6 +205,10 @@ class CodeActAgent(Agent):
         # to the conversation manager for processing, but if we get a condensation
         # event we'll just return that instead of an action. The controller will
         # immediately ask the agent to step again with the new view.
+         # Continue with pending actions if any
+        if self.pending_actions:
+            return self.pending_actions.popleft()
+
         condensed_history: list[Event] = []
         match self.condenser.condensed_history(state):
             case View(events=events):
@@ -227,28 +226,16 @@ class CodeActAgent(Agent):
             if self.auto_reflect_reactive:
                 is_last_turn_tool_error, tool_call_error_message =self._last_turn_has_tool_error(condensed_history)
                 if is_last_turn_tool_error and not self._last_action_is_think(condensed_history):
-                    self.pending_actions.clear() # clear the queue
-                    self._num_steps += 1
-                    self._last_reflection_step = self._num_steps
                     return self._emit_reflection(f"I encountered a tool call with the following error: {tool_call_error_message}. \nI need to think about it and propose concrete adjustments plus the single next best action/tool.")
 
             # NOTE: reflection case 1: Probablistically do general last N step reflection
             # Let's do not break any pending actions
             # Also make sure the last action was not think
-            if random.random() < self.auto_reflect_prob and \
-                not self.pending_actions and \
-                self._last_reflection_step != self._num_steps and \
-                not self._last_action_is_think(condensed_history):
-
-                self._num_steps += 1
-                self._last_reflection_step = self._num_steps
+            if random.random() < self.auto_reflect_prob and not self._last_action_is_think(condensed_history):
                 return self._emit_reflection(
                     self.auto_reflect_prompt.format(n=self.auto_reflect_lookback)
                 )
 
-        # Continue with pending actions if any
-        if self.pending_actions:
-            return self.pending_actions.popleft()
 
         # if we're done, go back
         latest_user_message = state.get_last_user_message()
@@ -278,8 +265,6 @@ class CodeActAgent(Agent):
         except Exception as e:
             # Wrong tool parsing will be raised by response_to_actions in function_calling.py
             if self.auto_reflect_enabled:
-                self._last_reflection_step = self._num_steps
-                self._num_steps += 1
                 return self._emit_reflection(
                     f"Malformed tool call (invalid JSON/args):\n```\n{e}\n```\n"
                     "Reflect briefly and emit a valid tool call or a better-plan message."
@@ -289,7 +274,6 @@ class CodeActAgent(Agent):
         logger.debug(f'Actions after response_to_actions: {actions}')
         for action in actions:
             self.pending_actions.append(action)
-        self._num_steps += 1
         return self.pending_actions.popleft()
 
 
