@@ -8,6 +8,42 @@ if TYPE_CHECKING:
     from litellm import ChatCompletionToolParam
 
 
+def extract_and_strip_logprobs(resp):
+        """
+        - Pulls out tokens/logprobs from response_dict["choices"][i]["logprobs"]["content"]
+        - Removes the big logprobs blocks from each choice
+        - Returns (tokens, logprobs, cleaned_response_dict)
+        """
+
+        all_tokens = []
+        all_logprobs = []
+
+        choices = resp.get("choices", [])
+        for choice in choices:
+            lp = choice.get("logprobs")
+            if not lp:
+                continue
+
+            content = lp.get("content", [])
+            for item in content:
+                all_tokens.append(item.get("token"))
+                all_logprobs.append(item.get("logprob"))
+
+            # Cleanup redundant logprobs from resp Pydantic object
+            try:
+                choice.logprobs = {
+                    "tokens": all_tokens,
+                    "all_logprobs": all_logprobs,
+                }
+            except Exception:
+                # 2) if the model is frozen/immutable, fall back to __dict__
+                try:
+                    choice.__dict__["logprobs"] = None
+                except Exception:
+                    # last resort: do nothing; at least we extracted them
+                    pass
+
+
 def check_tools(
     tools: list['ChatCompletionToolParam'], llm_config: LLMConfig
 ) -> list['ChatCompletionToolParam']:

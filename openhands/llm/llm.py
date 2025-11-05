@@ -10,6 +10,7 @@ import httpx
 from openhands.core.config import LLMConfig
 from openhands.llm.metrics import Metrics
 from openhands.llm.model_features import get_features
+from openhands.llm.llm_utils import extract_and_strip_logprobs
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
@@ -376,6 +377,8 @@ class LLM(RetryMixin, DebugMixin):
                     self.config.log_completions_folder,
                     f'{self.config.model.replace("/", "__")}-{time.time()}.json',
                 )
+
+                extract_and_strip_logprobs(resp)
 
                 # set up the dict to be logged
                 _d = {
