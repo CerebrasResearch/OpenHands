@@ -171,6 +171,23 @@ def add_item(dict_obj, key, value):
 
 
 def eval_entry(entry, logger):
+    if entry['history'] is None:
+        summary = {
+            'instance_id': entry.get('instance_id', ''),
+            'error': entry.get('error', ''),
+            'conversation_size': 0,
+            'source_counts': {},
+            'tool_call_counts': {},
+            'bash_tool_call_counts': {},
+            'agent_calls': [],
+            'agent_messages': [],
+            'observations': {},
+            'user_messages': {},
+            'events': [],
+            'bash_tool_call_summary': {},
+            'source_ids': {}
+            }
+        return summary
     history = entry['history'][3:]
     conversation_size = len(history)
     events = []
@@ -350,6 +367,14 @@ def filter_entries(input_file, search_text_groups, output_dir, metadata_dir, sum
 
                 if selected_ids is not None and entry["instance_id"] not in selected_ids:
                     logger.info(f"Skipping {entry['instance_id']} since not in selected_ids")
+                    continue
+
+                if entry["history"] is None and "Maximum retries" in text:
+                    logger.info(f"Skipping instance_id {entry['instance_id']} - MAXIMUM RETRIES")
+                    continue
+
+                if entry["history"] is None:
+                    logger.info(f"Skipping instance_id {entry['instance_id']} - EMPTY HISTORY OTHER")
                     continue
 
                 # Check inclusion criteria (all must be present)

@@ -99,20 +99,20 @@ echo ""
 #############################
 # 🚀 Run Main Evaluation   #
 #############################
-echo "🔧 Starting main inference..."
-/workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer_local_docker.sh \
-    $MODEL \
-    HEAD \
-    CodeActAgent \
-    $NUM_SAMPLES \
-    $MAX_TURNS \
-    $NUM_WORKERS \
-    $DATASET \
-    $SPLIT \
-    $NUM_RUNS \
-    swe
-echo "✅ Evaluation complete. Results saved in $EVAL_OUTPUT_DIR"
-echo
+# echo "🔧 Starting main inference..."
+# /workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer_local_docker.sh \
+#     $MODEL \
+#     HEAD \
+#     CodeActAgent \
+#     $NUM_SAMPLES \
+#     $MAX_TURNS \
+#     $NUM_WORKERS \
+#     $DATASET \
+#     $SPLIT \
+#     $NUM_RUNS \
+#     swe
+# echo "✅ Evaluation complete. Results saved in $EVAL_OUTPUT_DIR"
+# echo
 
 ##########################
 # --- TOOL CALL SUMMARY --#

@@ -12,13 +12,10 @@ disable_progress_bars()
 
 # ORACLE_DATASET = 'princeton-nlp/SWE-bench_oracle'
 
-# ORACLE_DATASET = 'princeton-nlp/SWE-bench_Verified'
 
-# oracle_ds = load_dataset(ORACLE_DATASET, split='test')
+# ORACLE_DATASET = 'princeton-nlp/SWE-bench'
 
-ORACLE_DATASET = 'princeton-nlp/SWE-bench'
-
-oracle_ds = load_dataset(ORACLE_DATASET, split='dev')
+# oracle_ds = load_dataset(ORACLE_DATASET, split='dev')
 
 
 ## load trajectory
@@ -103,7 +100,7 @@ def generate_plots(report, report_dir):
     gen_plot_label(recall, recall_title, recall_plot_path)
 
 
-def analyse_entry(instance_id, gen_patch):
+def analyse_entry(instance_id, gen_patch, oracle_ds):
 
     oracle_instance = oracle_ds.filter(lambda x: x['instance_id'] == instance_id)[0]
     oracle_patch = oracle_instance['patch']
@@ -145,14 +142,16 @@ def analyse_entry(instance_id, gen_patch):
 
     return cur_entry
 
-def analyse_patches(generated_entries, output_file=None):
+def analyse_patches(generated_entries, dataset_name, dataset_split, output_file=None):
+
+    oracle_ds = load_dataset(dataset_name, split=dataset_split)
 
     complete_report = []
 
     for entry in tqdm(generated_entries, desc="Analysing Predictions ..... "):
         instance_id = entry['instance_id']
         gen_patch = entry['model_patch']
-        cur_entry_analysis = analyse_entry(instance_id, gen_patch)
+        cur_entry_analysis = analyse_entry(instance_id, gen_patch, oracle_ds)
         complete_report.append(cur_entry_analysis)
 
     if output_file is not None:
@@ -174,6 +173,9 @@ def main():
     parser.add_argument('--predictions_path', type=str, required=True, help='Path to the predictions JSONL file')
     parser.add_argument('--report_dir', type=str, required=True, help='Directory to save the localisation report and plots')
     parser.add_argument('--selected_ids', type=str, required=False, default=None, help="Pass toml file with key selected_ids")
+    parser.add_argument('--dataset_name', type=str, required=False, default="princeton-nlp/SWE-bench_Verified", help="HF dataset")
+    parser.add_argument('--dataset_split', type=str, required=False, default="test", help="HF dataset")
+
     args = parser.parse_args()
 
     model_name = args.model_name
@@ -209,7 +211,7 @@ def main():
     complete_report = []
 
     print(f'Len of predictions_data:',{len(predictions_data)})
-    complete_report = analyse_patches(predictions_data, localisation_report_path)
+    complete_report = analyse_patches(predictions_data, args.dataset_name, args.dataset_split, localisation_report_path)
 
     print('Generating plots...')
 

@@ -33,7 +33,7 @@ NUM_RUNS=1
 #######################################
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-LOGDIR_RUN="logs_end_to_end"
+LOGDIR_RUN="logs_discard"
 mkdir -p "$LOGDIR_RUN"
 LOGFILE="$LOGDIR_RUN/eval_run_${EVAL_OUTNAME}_${TIMESTAMP}.log"
 
@@ -99,25 +99,25 @@ echo ""
 #############################
 # 🚀 Run Main Evaluation   #
 #############################
-echo "🔧 Starting main inference..."
-/workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer_local_docker.sh \
-    $MODEL \
-    HEAD \
-    CodeActAgent \
-    $NUM_SAMPLES \
-    $MAX_TURNS \
-    $NUM_WORKERS \
-    $DATASET \
-    $SPLIT \
-    $NUM_RUNS \
-    swe
-echo "✅ Evaluation complete. Results saved in $EVAL_OUTPUT_DIR"
-echo
+# echo "🔧 Starting main inference..."
+# /workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer_local_docker.sh \
+#     $MODEL \
+#     HEAD \
+#     CodeActAgent \
+#     $NUM_SAMPLES \
+#     $MAX_TURNS \
+#     $NUM_WORKERS \
+#     $DATASET \
+#     $SPLIT \
+#     $NUM_RUNS \
+#     swe
+# echo "✅ Evaluation complete. Results saved in $EVAL_OUTPUT_DIR"
+# echo
 
 ##########################
 # --- TOOL CALL SUMMARY --#
 ##########################
-echo ">>> [1/5] TOOL CALL SUMMARY"
+# echo ">>> [1/5] TOOL CALL SUMMARY"
 
 JSONL_DIR="/workspaces/OpenHands/$EVAL_OUTPUT_DIR"
 ALL_JSONL_FILES=$(find "$JSONL_DIR" -type f -name "output.jsonl")
@@ -125,43 +125,43 @@ JSONL_FILE=$(echo "$ALL_JSONL_FILES" | head -n 1)
 PARENT_FOLDER=$(dirname "$JSONL_FILE")
 TOOL_SUMMARY_OUTPUT="$PARENT_FOLDER/bash_tool_call_summary_$MODEL"
 
-echo "    Using JSONL file: $JSONL_FILE"
-echo "    Saving summary to: $TOOL_SUMMARY_OUTPUT"
+# echo "    Using JSONL file: $JSONL_FILE"
+# echo "    Saving summary to: $TOOL_SUMMARY_OUTPUT"
 
-python3 /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary.py \
-    --input_file "$JSONL_FILE" \
-    --output_dir "$TOOL_SUMMARY_OUTPUT"
+# python3 /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary.py \
+#     --input_file "$JSONL_FILE" \
+#     --output_dir "$TOOL_SUMMARY_OUTPUT"
 
-echo "✅ Tool call summary complete."
+# echo "✅ Tool call summary complete."
 
 ##########################
 # --- CONVERT TO SWE-BENCH FORMAT --#
 ##########################
-echo ""
-echo ">>> [2/5] CONVERTING OUTPUT TO SWE-BENCH FORMAT"
+# echo ""
+# echo ">>> [2/5] CONVERTING OUTPUT TO SWE-BENCH FORMAT"
 
-python3 /workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/eval/convert_oh_output_to_swe_json.py "$JSONL_FILE"
+# python3 /workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/eval/convert_oh_output_to_swe_json.py "$JSONL_FILE"
 
 SWEBENCH_JSONL="$PARENT_FOLDER/output.swebench.jsonl"
-echo "✅ Converted to: $SWEBENCH_JSONL"
+# echo "✅ Converted to: $SWEBENCH_JSONL"
 
 ##########################
 # ---- LOCALIZATION REPORT ----#
 ##########################
-echo ""
-echo ">>> [3/5] LOCALIZATION REPORT"
+# echo ""
+# echo ">>> [3/5] LOCALIZATION REPORT"
 
 LOC_SUMMARY_OUTPUT="$PARENT_FOLDER/localization"
-mkdir -p "$LOC_SUMMARY_OUTPUT"
+# mkdir -p "$LOC_SUMMARY_OUTPUT"
 
-python3 /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/generate_localisation_report.py \
-    --model_name "$MODEL" \
-    --predictions_path "$SWEBENCH_JSONL" \
-    --report_dir "$LOC_SUMMARY_OUTPUT" \
-    --dataset_name "$DATASET" \
-    --dataset_split "$SPLIT"
+# python3 /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/generate_localisation_report.py \
+#     --model_name "$MODEL" \
+#     --predictions_path "$SWEBENCH_JSONL" \
+#     --report_dir "$LOC_SUMMARY_OUTPUT" \
+#     --dataset_name "$DATASET" \
+#     --dataset_split "$SPLIT"
 
-echo "✅ Localization summary saved to: $LOC_SUMMARY_OUTPUT"
+# echo "✅ Localization summary saved to: $LOC_SUMMARY_OUTPUT"
 
 ##########################
 # --- FINAL EVAL (TRAJECTORY) ---#
@@ -173,32 +173,32 @@ OUT_FINAL="$PARENT_FOLDER/final_eval"
 mkdir -p "$OUT_FINAL"
 FINAL_PRED_PATH="$SWEBENCH_JSONL"
 
-EXEC_SCRIPT="$PARENT_FOLDER/run_commands.sh"
-echo "#!/bin/bash" > "$EXEC_SCRIPT"
-echo "" >> "$EXEC_SCRIPT"
+# EXEC_SCRIPT="$PARENT_FOLDER/run_commands.sh"
+# echo "#!/bin/bash" > "$EXEC_SCRIPT"
+# echo "" >> "$EXEC_SCRIPT"
 
-cat >> "$EXEC_SCRIPT" << EOF
-cd $OUT_FINAL
-python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh_local.py \\
-  --run_id "$MODEL" \\
-  --predictions_path "$FINAL_PRED_PATH" \\
-  --output_dir "$OUT_FINAL" \\
-  --dataset_name "$DATASET" \\
-  --dataset_split "$SPLIT"
-EOF
+# cat >> "$EXEC_SCRIPT" << EOF
+# cd $OUT_FINAL
+# python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh_local.py \\
+#   --run_id "$MODEL" \\
+#   --predictions_path "$FINAL_PRED_PATH" \\
+#   --output_dir "$OUT_FINAL" \\
+#   --dataset_name "$DATASET" \\
+#   --dataset_split "$SPLIT"
+# EOF
 
-chmod +x "$EXEC_SCRIPT"
-cat "$EXEC_SCRIPT"
+# chmod +x "$EXEC_SCRIPT"
+# cat "$EXEC_SCRIPT"
 
 # Run it now
-cd "$OUT_FINAL"
-echo "Current directory: $(pwd)"
-python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh_local.py \
-  --run_id "$MODEL" \
-  --predictions_path "$FINAL_PRED_PATH" \
-  --output_dir "$OUT_FINAL" \
-  --dataset_name "$DATASET" \
-  --dataset_split "$SPLIT"
+# cd "$OUT_FINAL"
+# echo "Current directory: $(pwd)"
+# python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh_local.py \
+#   --run_id "$MODEL" \
+#   --predictions_path "$FINAL_PRED_PATH" \
+#   --output_dir "$OUT_FINAL" \
+#   --dataset_name "$DATASET" \
+#   --dataset_split "$SPLIT"
 
 # EVAL_JSON=$(find "$OUT_FINAL" -type f -name "consolidated_report*.json" | head -n 1)
 EVAL_JSON=$(find "$OUT_FINAL" -type f -name "consolidated_report*.json" -print0 | xargs -0 ls -t | head -n 1)

@@ -1,11 +1,14 @@
 import json
 import os
 from collections import defaultdict
+import matplotlib
+matplotlib.use('Agg')  # Add this BEFORE importing pyplot
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
 import random
 import argparse
+import random
 
 
 # LIST_OF_SUMMARY = {
@@ -18,17 +21,46 @@ import argparse
 # BASELINE = "Baseline_176"
 
 
+# LIST_OF_SUMMARY = {
+#     "Qwen30B_Baseline_50": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_sb_dev_baseline_cmd_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary_selected.json",
+#     "Qwen30B_LOCPr5_50": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_sb_dev_LocPr5_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary_selected.json",
+#     "Qwen30B_Baseline_176": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_sb_dev_baseline_cmd_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+#     "Qwen30B_LOCPr5_176": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_sb_dev_LocPr5_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+#     "Qwen480B_Baseline_50": "/workspaces/OpenHands/evaluation/eval_llm_qwen480B_sb_dev_baseline_cmd_only_50inst_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-3-coder-480b_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+#     "Qwen480B_LOCPr5_50": "/workspaces/OpenHands/evaluation/eval_llm_qwen480B_sb_dev_LocPr5_50inst_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-3-coder-480b_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+
+#     # "LOCPr5_str_replace_edit_think_plan_brainstorm_Qwen30B": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_sb_dev_LocPr5_str_replace_think_plan_50inst/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+#     # "LocPr5_str_replace_think_plan_resolvedbaselocpr": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_sb_dev_LocPr5_str_replace_think_plan_resolvedbaselocpr/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json"
+# }
+
 LIST_OF_SUMMARY = {
-    "Baseline_50": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_sb_dev_baseline_cmd_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary_selected.json",
-    "LOCPr5_Qwen30B_50": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_sb_dev_LocPr5_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary_selected.json",
-    "Baseline_176": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_sb_dev_baseline_cmd_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
-    "LOCPr5_Qwen30B_176": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_sb_dev_LocPr5_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
-    "LOCPr5_str_replace_edit_think_plan_brainstorm_Qwen30B": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_sb_dev_LocPr5_str_replace_think_plan_50inst/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
-    "LocPr5_str_replace_think_plan_resolvedbaselocpr": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_sb_dev_LocPr5_str_replace_think_plan_resolvedbaselocpr/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json"
+    "Qwen30B_Baseline_Hard50": "/workspaces/OpenHands/evaluation/eval_runs_previous/eval_llm_qwen30B_sb_dev_baseline_cmd_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary_selected.json",
+
+    "Qwen30B_LocPr5_Hard50": "/workspaces/OpenHands/evaluation/eval_runs_previous/eval_llm_qwen30B_sb_dev_LocPr5_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary_selected.json",
+
+    "Qwen30B_LocPr5_phase4_think_Hard50": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_sb_dev_LocPr5_thinkNOstrreplace_ph4planphase_full176/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary_selected_50hard.json",
+
+    "Qwen30B_Baseline_CepoToolv2_Hard50": "/workspaces/OpenHands/evaluation/eval_llm_qwen30B_baseline_cepo_tool_v2_swebench_dev_50hard/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/Qwen3-Coder-30B-A3B-Instruct_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+
+    "Qwen480B_Baseline_Hard50": "/workspaces/OpenHands/evaluation/eval_runs_previous/eval_llm_qwen480B_sb_dev_baseline_cmd_only_50inst_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-3-coder-480b_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+
+    "Qwen480B_LocPr5_Hard50": "/workspaces/OpenHands/evaluation/eval_runs_previous/eval_llm_qwen480B_sb_dev_LocPr5_50inst_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-3-coder-480b_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+
+    "Qwen480B_LocPr5_phase4_think_Hard50": "/workspaces/OpenHands/evaluation/eval_llm_qwen480B_sb_dev_LocPr5_thinkNOstrreplace_ph4planphase_50hard/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/Qwen3-Coder-480B-A35B-Instruct-FP8_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+
+    "Qwen480B_Baseline_CepoToolv2_Hard50": "/workspaces/OpenHands/evaluation/eval_llm_qwen480B_baseline_cepo_tool_v2_swebench_dev_50hard/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/Qwen3-Coder-480B-A35B-Instruct-FP8_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+
+    "Qwen30B_Baseline_176": "/workspaces/OpenHands/evaluation/eval_runs_previous/eval_llm_qwen30B_sb_dev_LocPr5_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+
+    "Qwen30B_LOCPr5_176": "/workspaces/OpenHands/evaluation/eval_runs_previous/eval_llm_qwen30B_sb_dev_LocPr5_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json"
+
 }
 
-# BASELINE = "Baseline_50"
-BASELINE = "Baseline_176"
+
+# BASELINE = "Qwen30B_Baseline_50"
+# BASELINE = "Qwen480B_Baseline_50"
+# BASELINE = "Baseline_176"
+BASELINE = "Qwen480B_Baseline_Hard50"
 
 def load_json(json_path):
     with open(json_path, 'r') as fh:
@@ -165,62 +197,73 @@ def create_comparison_plots(all_stats, baseline_name="Baseline", output_dir="./"
     avg_precision = [all_stats[name]['localization_avg_metrics']['precision'] for name in names]
     avg_recall = [all_stats[name]['localization_avg_metrics']['recall'] for name in names]
 
-    fig, axes = plt.subplots(2, 3, figsize=(15, 10))
-    fig.suptitle('Experiment Comparison Report', fontsize=16, fontweight='bold')
+    # Generate random colors for each bar
+    colors = ['#' + ''.join([random.choice('0123456789ABCDEF') for _ in range(6)]) for _ in names]
 
-    colors = ['#2ecc71' if name == baseline_name else '#3498db' for name in names]
+    # First plot: Resolution metrics
+    fig1, axes1 = plt.subplots(1, 3, figsize=(15, 6))
+    fig1.suptitle('Experiment Comparison Report - Resolution Metrics', fontsize=16, fontweight='bold', y=0.98)
 
-    axes[0, 0].bar(names, resolved_counts, color=colors, alpha=0.7, edgecolor='black')
-    axes[0, 0].set_ylabel('Number Resolved')
-    axes[0, 0].set_title('Issues Resolved')
-    axes[0, 0].tick_params(axis='x', rotation=90)
+    axes1[0].bar(names, resolved_counts, color=colors, alpha=0.7, edgecolor='black')
+    axes1[0].set_ylabel('Number Resolved')
+    axes1[0].set_title('Issues Resolved')
+    axes1[0].tick_params(axis='x', rotation=90)
     for i, v in enumerate(resolved_counts):
-        axes[0, 0].text(i, v + 0.5, str(v), ha='center', va='bottom', fontweight='bold')
+        axes1[0].text(i, v + 0.2, str(v), ha='center', va='bottom', fontweight='bold', rotation=90)
 
-    axes[0, 1].bar(names, resolved_pcts, color=colors, alpha=0.7, edgecolor='black')
-    axes[0, 1].set_ylabel('Percentage (%)')
-    axes[0, 1].set_title('Resolution Rate')
-    axes[0, 1].tick_params(axis='x', rotation=90)
-    axes[0, 1].set_ylim([0, max(resolved_pcts) * 1.15])
+    axes1[1].bar(names, resolved_pcts, color=colors, alpha=0.7, edgecolor='black')
+    axes1[1].set_ylabel('Percentage (%)')
+    axes1[1].set_title('Resolution Rate')
+    axes1[1].tick_params(axis='x', rotation=90)
+    axes1[1].set_ylim([0, max(resolved_pcts) * 1.15])
     for i, v in enumerate(resolved_pcts):
-        axes[0, 1].text(i, v + 1, f'{v:.1f}%', ha='center', va='bottom', fontweight='bold')
+        axes1[1].text(i, v + 0.2, f'{v:.1f}%', ha='center', va='bottom', fontweight='bold', rotation=90)
 
-    axes[0, 2].bar(names, avg_llm_calls, color=colors, alpha=0.7, edgecolor='black')
-    axes[0, 2].set_ylabel('Avg Calls')
-    axes[0, 2].set_title('Avg LLM Calls per Instance')
-    axes[0, 2].tick_params(axis='x', rotation=90)
+    axes1[2].bar(names, avg_llm_calls, color=colors, alpha=0.7, edgecolor='black')
+    axes1[2].set_ylabel('Avg Calls')
+    axes1[2].set_title('Avg LLM Calls per Instance')
+    axes1[2].tick_params(axis='x', rotation=90)
     for i, v in enumerate(avg_llm_calls):
-        axes[0, 2].text(i, v + 0.2, f'{v:.2f}', ha='center', va='bottom', fontweight='bold')
-
-    axes[1, 0].bar(names, avg_prompt_tokens, color=colors, alpha=0.7, edgecolor='black')
-    axes[1, 0].set_ylabel('Avg Tokens')
-    axes[1, 0].set_title('Avg Prompt Tokens per Instance')
-    axes[1, 0].tick_params(axis='x', rotation=90)
-    for i, v in enumerate(avg_prompt_tokens):
-        axes[1, 0].text(i, v + 50, f'{v:.0f}', ha='center', va='bottom', fontweight='bold')
-
-    axes[1, 1].bar(names, avg_precision, color=colors, alpha=0.7, edgecolor='black')
-    axes[1, 1].set_ylabel('Precision')
-    axes[1, 1].set_title('Avg Precision')
-    axes[1, 1].set_ylim([0, 1.1])
-    axes[1, 1].tick_params(axis='x', rotation=90)
-    for i, v in enumerate(avg_precision):
-        axes[1, 1].text(i, v + 0.02, f'{v:.4f}', ha='center', va='bottom', fontweight='bold')
-
-    axes[1, 2].bar(names, avg_recall, color=colors, alpha=0.7, edgecolor='black')
-    axes[1, 2].set_ylabel('Recall')
-    axes[1, 2].set_title('Avg Recall')
-    axes[1, 2].set_ylim([0, 1.1])
-    axes[1, 2].tick_params(axis='x', rotation=90)
-    for i, v in enumerate(avg_recall):
-        axes[1, 2].text(i, v + 0.02, f'{v:.4f}', ha='center', va='bottom', fontweight='bold')
+        axes1[2].text(i, v + 0.2, f'{v:.2f}', ha='center', va='bottom', fontweight='bold', rotation=90)
 
     plt.tight_layout()
-    filepath = os.path.join(output_dir, 'comparison_report.png')
-    plt.savefig(filepath, dpi=300, bbox_inches='tight')
-    print("\n✓ Saved: comparison_report.png")
+    filepath1 = os.path.join(output_dir, 'comparison_report_resolution.png')
+    plt.savefig(filepath1, dpi=600, bbox_inches='tight')
+    print("\n✓ Saved: comparison_report_resolution.png")
     plt.close()
 
+    # Second plot: Performance metrics
+    fig2, axes2 = plt.subplots(1, 3, figsize=(15, 6))
+    fig2.suptitle('Experiment Comparison Report - Performance Metrics', fontsize=16, fontweight='bold', y=0.98)
+
+    axes2[0].bar(names, avg_prompt_tokens, color=colors, alpha=0.7, edgecolor='black')
+    axes2[0].set_ylabel('Avg Tokens')
+    axes2[0].set_title('Avg Prompt Tokens per Instance')
+    axes2[0].tick_params(axis='x', rotation=90)
+    for i, v in enumerate(avg_prompt_tokens):
+        axes2[0].text(i, v + 60, f'{v:.0f}', ha='center', va='bottom', fontweight='bold', rotation=90)
+
+    axes2[1].bar(names, avg_precision, color=colors, alpha=0.7, edgecolor='black')
+    axes2[1].set_ylabel('Precision')
+    axes2[1].set_title('Avg Precision')
+    axes2[1].set_ylim([0, 1.1])
+    axes2[1].tick_params(axis='x', rotation=90)
+    for i, v in enumerate(avg_precision):
+        axes2[1].text(i, v + 0.01, f'{v:.4f}', ha='center', va='bottom', fontweight='bold', rotation=90)
+
+    axes2[2].bar(names, avg_recall, color=colors, alpha=0.7, edgecolor='black')
+    axes2[2].set_ylabel('Recall')
+    axes2[2].set_title('Avg Recall')
+    axes2[2].set_ylim([0, 1.1])
+    axes2[2].tick_params(axis='x', rotation=90)
+    for i, v in enumerate(avg_recall):
+        axes2[2].text(i, v + 0.01, f'{v:.4f}', ha='center', va='bottom', fontweight='bold', rotation=90)
+
+    plt.tight_layout()
+    filepath2 = os.path.join(output_dir, 'comparison_report_performance.png')
+    plt.savefig(filepath2, dpi=600, bbox_inches='tight')
+    print("\n✓ Saved: comparison_report_performance.png")
+    plt.close()
 
 def create_grand_total_tool_calls_plot(all_stats, baseline_name="Baseline", output_dir="./"):
     """Create plot for grand total tool calls."""
@@ -234,7 +277,7 @@ def create_grand_total_tool_calls_plot(all_stats, baseline_name="Baseline", outp
     for bar in bars:
         height = bar.get_height()
         ax.text(bar.get_x() + bar.get_width()/2., height, f'{int(height)}',
-               ha='center', va='bottom', fontweight='bold', fontsize=12)
+               ha='center', va='bottom', fontweight='bold', fontsize=12, rotation=90)
 
     ax.set_ylabel('Total Tool Calls', fontsize=12, fontweight='bold')
     ax.set_title('Grand Total Tool Calls per Experiment', fontsize=14, fontweight='bold')
@@ -248,83 +291,6 @@ def create_grand_total_tool_calls_plot(all_stats, baseline_name="Baseline", outp
     plt.close()
 
 
-# def create_tool_calls_all_tools_plot(all_stats, baseline_name="Baseline", output_dir="./"):
-#     """Create plot for all tools called."""
-#     names = list(all_stats.keys())
-
-#     all_tools = set()
-#     for name in names:
-#         all_tools.update(all_stats[name]['total_tool_calls'].keys())
-#     all_tools = sorted(list(all_tools))
-
-#     colors_list = generate_random_colors(len(names))
-
-#     fig, ax = plt.subplots(figsize=(16, 8))
-#     x = np.arange(len(all_tools))
-#     width = 0.25
-
-#     for idx, name in enumerate(names):
-#         tool_counts = [all_stats[name]['total_tool_calls'].get(tool, 0) for tool in all_tools]
-#         bars = ax.bar(x + idx * width, tool_counts, width, label=name, color=colors_list[idx], alpha=0.8, edgecolor='black')
-
-#         for bar in bars:
-#             height = bar.get_height()
-#             if height > 0:
-#                 ax.text(bar.get_x() + bar.get_width()/2., height, f'{int(height)}',
-#                        ha='center', va='bottom', fontsize=8, fontweight='bold')
-
-#     ax.set_xlabel('Tools', fontsize=12, fontweight='bold')
-#     ax.set_ylabel('Total Calls', fontsize=12, fontweight='bold')
-#     ax.set_title('All Tools - Total Calls Across Experiments', fontsize=14, fontweight='bold')
-#     ax.set_xticks(x + width)
-#     ax.set_xticklabels(all_tools, rotation=90, ha='right')
-#     ax.legend(fontsize=11)
-#     ax.grid(axis='y', alpha=0.3)
-
-#     plt.tight_layout()
-#     filepath = os.path.join(output_dir, 'tool_calls_all_tools_comparison.png')
-#     plt.savefig(filepath, dpi=300, bbox_inches='tight')
-#     print("✓ Saved: tool_calls_all_tools_comparison.png")
-#     plt.close()
-
-# def create_tool_calls_all_tools_plot(all_stats, baseline_name="Baseline", output_dir="./"):
-#     """Create plot for all tools called."""
-#     names = list(all_stats.keys())
-
-#     all_tools = set()
-#     for name in names:
-#         all_tools.update(all_stats[name]['total_tool_calls'].keys())
-#     all_tools = sorted(list(all_tools))
-
-#     colors_list = generate_random_colors(len(names))
-
-#     fig, ax = plt.subplots(figsize=(12, max(8, len(all_tools) * 0.8)))
-#     y = np.arange(len(all_tools)) * 1.5
-#     height = 0.5
-
-#     for idx, name in enumerate(names):
-#         tool_counts = [all_stats[name]['total_tool_calls'].get(tool, 0) for tool in all_tools]
-#         bars = ax.barh(y + idx * height, tool_counts, height, label=name, color=colors_list[idx], alpha=0.8, edgecolor='black')
-
-#         for bar in bars:
-#             width = bar.get_width()
-#             if width > 0:
-#                 ax.text(width + max(tool_counts) * 0.01, bar.get_y() + bar.get_height()/2., f'{int(width)}',
-#                        ha='left', va='center', fontsize=8, fontweight='bold')
-
-#     ax.set_ylabel('Tools', fontsize=12, fontweight='bold')
-#     ax.set_xlabel('Total Calls', fontsize=12, fontweight='bold')
-#     ax.set_title('All Tools - Total Calls Across Experiments', fontsize=14, fontweight='bold')
-#     ax.set_yticks(y + height)
-#     ax.set_yticklabels(all_tools)
-#     ax.legend(fontsize=11, loc='upper right')
-#     ax.grid(axis='x', alpha=0.3)
-
-#     plt.tight_layout()
-#     filepath = os.path.join(output_dir, 'tool_calls_all_tools_comparison.png')
-#     plt.savefig(filepath, dpi=300, bbox_inches='tight')
-#     print("✓ Saved: tool_calls_all_tools_comparison.png")
-#     plt.close()
 
 def create_tool_calls_all_tools_plot(all_stats, baseline_name="Baseline", output_dir="./"):
     """Create plot for all tools called."""

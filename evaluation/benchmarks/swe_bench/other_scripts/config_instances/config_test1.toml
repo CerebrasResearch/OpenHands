@@ -1,0 +1,9 @@
+
+
+# selected_ids = [
+#     "pvlib__pvlib-python-1478",
+# ]
+
+selected_ids = [
+    "sqlfluff__sqlfluff-884"
+]

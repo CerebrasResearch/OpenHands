@@ -166,6 +166,24 @@ def add_item(dict_obj, key, value):
 
 
 def eval_entry(entry, logger):
+    if entry['history'] is None:
+        summary = {
+            'instance_id': entry.get('instance_id', ''),
+            'error': entry.get('error', ''),
+            'conversation_size': 0,
+            'source_counts': {},
+            'tool_call_counts': {},
+            'bash_tool_call_counts': {},
+            'agent_calls': [],
+            'agent_messages': [],
+            'observations': {},
+            'user_messages': {},
+            'events': [],
+            'bash_tool_call_summary': {},
+            'source_ids': {}
+            }
+        return summary
+
     history = entry['history'][3:]
     conversation_size = len(history)
     events = []
@@ -396,17 +414,13 @@ def filter_entries(input_file, search_text_groups, output_dir, metadata_dir, sum
                     continue
                 text = json.dumps(entry)  # Convert entry back to string for searching
 
-                # if group_name == "without_errror_and_non_empty_patches":
-                #     logger.info(f"Checking instance_id {entry['instance_id']}")
-                #     logger.info(f"Entry line: {line}")
-                #     logger.info(f"Entry text: {text}")
-                #     logger.info(f"Include texts: {include_texts}")
-                #     logger.info(f"Exclude texts: {exclude_texts}")
-                #     logger.info(f"Include check: {all(inc_text in line for inc_text in include_texts)}")
-                #     logger.info(f"Exclude check: {any(exc_text in line for exc_text in exclude_texts)}")
+                if entry["history"] is None and "Maximum retries" in text:
+                    logger.info(f"Skipping instance_id {entry['instance_id']} - MAXIMUM RETRIES")
+                    continue
 
-                #     logger.info(f"Include check: {all(inc_text in text for inc_text in include_texts)}")
-                #     logger.info(f"Exclude check: {any(exc_text in text for exc_text in exclude_texts)}")
+                if entry["history"] is None:
+                    logger.info(f"Skipping instance_id {entry['instance_id']} - EMPTY HISTORY OTHER")
+                    continue
 
                 # Check inclusion criteria (all must be present)
                 if all(inc_text in text for inc_text in include_texts):

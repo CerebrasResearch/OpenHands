@@ -14,10 +14,11 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional
 import re
+import toml
 
 
 class SWEBenchEvaluator:
-    def __init__(self, run_id: str, predictions_path: str, output_dir: str = "output", dataset_name: str = "princeton-nlp/SWE-bench", dataset_split="dev"):
+    def __init__(self, run_id: str, predictions_path: str, output_dir: str = "output", dataset_name: str = "princeton-nlp/SWE-bench", dataset_split="dev", selected_ids=None):
         self.run_id = run_id
         self.predictions_path = predictions_path
         self.output_dir = Path(output_dir)
@@ -28,7 +29,7 @@ class SWEBenchEvaluator:
             "princeton-nlp/SWE-bench_dev": os.path.join(self.parent_docker_image_dir, "swebench_dockers/dev/docker_images"),
             "princeton-nlp/SWE-bench_test": os.path.join(self.parent_docker_image_dir, "swebench_dockers/test/docker_images"),
             "princeton-nlp/SWE-bench_train": os.path.join(self.parent_docker_image_dir, "swebench_dockers/train/docker_images"),
-            "princeton-nlp/SWE-bench_Verified_dev": os.path.join(self.parent_docker_image_dir, "swebench_verified_dockers/dev/docker_images"),
+            "princeton-nlp/SWE-bench_Verified_test": os.path.join(self.parent_docker_image_dir, "swebench_verified_dockers/test/docker_images"),
         }
         self.docker_image_dir = dockers_dict[f"{dataset_name}_{dataset_split}"]
 
@@ -39,6 +40,7 @@ class SWEBenchEvaluator:
         self.setup_logging()
         self.dataset_name = dataset_name
         self.dataset_split = dataset_split
+        self.selected_ids = selected_ids
 
         # Results tracking
         self.results = []
@@ -115,7 +117,13 @@ class SWEBenchEvaluator:
                             data = json.loads(line)
                             if "instance_id" in data:
                                 self.logger.info(f"Found instance_id in predictions: {data['instance_id']}")
-                                instance_ids.append(data['instance_id'])
+                                if self.selected_ids is not None:
+                                    if data['instance_id'] in self.selected_ids:
+                                        instance_ids.append(data['instance_id'])
+                                    else:
+                                        self.logger.info(f"Skipping instance_id not in selected_ids: {data['instance_id']}")
+                                else:
+                                    instance_ids.append(data['instance_id'])
                         except json.JSONDecodeError:
                             self.logger.warning(f"Invalid JSON line in predictions file: {line.strip()}")
 
@@ -481,7 +489,7 @@ def main():
     parser.add_argument("--output_dir", default="output", help="Output directory for logs and reports (default: output)")
     parser.add_argument("--dataset_name", default="princeton-nlp/SWE-bench", help="Dataset name for SWE-bench (default: princeton-nlp/SWE-bench)")
     parser.add_argument("--dataset_split", default="dev", help="Dataset name for SWE-bench (default: dev)")
-
+    parser.add_argument('--selected_ids', type=str, required=False, default=None, help="Pass toml file with key selected_ids")
 
     args = parser.parse_args()
 
@@ -494,7 +502,12 @@ def main():
         parser.error(f"Predictions path does not exist: {args.predictions_path}")
 
     # Create and run evaluator
-    evaluator = SWEBenchEvaluator(args.run_id, args.predictions_path, args.output_dir, args.dataset_name, args.dataset_split)
+    selected_ids = None
+    if args.selected_ids is not None:
+        selected_ids = toml.load(args.selected_ids)["selected_ids"]
+
+    print(f"Selected_IDS: {selected_ids}")
+    evaluator = SWEBenchEvaluator(args.run_id, args.predictions_path, args.output_dir, args.dataset_name, args.dataset_split, selected_ids)
     evaluator.run()
 
 

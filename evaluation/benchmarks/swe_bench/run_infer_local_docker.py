@@ -209,6 +209,53 @@ def load_local_image_if_needed(path: str, custom_tag: str = None) -> str:
     else:
         return path
 
+def load_local_image_if_needed_try1(path: str, custom_tag: str = None) -> str:
+    """
+    Load a Docker image from a local .tar file and return its name.
+    """
+    client = docker.from_env()
+    logger.info(f"{os.path.exists(path)},  {path.endswith('.tar')}")
+    if os.path.exists(path) and path.endswith(".tar"):
+        logger.info(f"📦 Loading local image from {path} ...")
+
+        # Load the image
+        with open(path, "rb") as f:
+            loaded_images = client.images.load(f.read())
+
+        if not loaded_images:
+            raise RuntimeError(f"Failed to load any images from {path}")
+
+        image = loaded_images[0]
+        logger.info(f"✅ Loaded image: {image.tags if image.tags else image.id}")
+
+        # If custom tag is provided, retag the image
+        if custom_tag is not None:
+            logger.info(f"🏷️ Retagging image to {custom_tag}")
+
+            # Get the image ID to ensure we're working with the right image
+            image_id = image.id
+
+            # Refresh the image object to ensure it's current
+            try:
+                image = client.images.get(image_id)
+            except docker.errors.ImageNotFound:
+                logger.error(f"Image {image_id} not found after load!")
+                raise
+
+            # Tag the image
+            success = image.tag(custom_tag)
+            if not success:
+                logger.error(f"Failed to tag image {image_id} as {custom_tag}")
+                raise RuntimeError(f"Failed to tag image as {custom_tag}")
+
+            logger.info(f"✅ Successfully tagged as {custom_tag}")
+            return custom_tag
+        else:
+            # Return the first existing tag or the image ID
+            return image.tags[0] if image.tags else image.id
+    else:
+        return path
+
 
 def get_instance_docker_image(
     instance_id: str,
@@ -260,7 +307,10 @@ def get_config(
     )
     if LOCAL_DOCKER_IMAGE_DIR:
         logger.info(f"Loading Local Docker")
-        base_container_image = load_local_image_if_needed(base_container_image, custom_tag= f"openhands_local_{instance['instance_id'].split('__')[1]}:latest")
+        # base_container_image = load_local_image_if_needed(base_container_image, custom_tag= f"docker.io/library/openhands_local_{instance['instance_id'].split('__')[1]}:latest")
+
+        base_container_image = load_local_image_if_needed_try1(base_container_image, custom_tag= f"openhands_local_{instance['instance_id'].split('__')[1]}:latest")
+
         logger.info(
             f'Using LOCAL docker image for instance {instance["instance_id"]}: {base_container_image}'
         )

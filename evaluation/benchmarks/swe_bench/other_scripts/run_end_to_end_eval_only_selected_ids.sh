@@ -99,20 +99,20 @@ echo ""
 #############################
 # 🚀 Run Main Evaluation   #
 #############################
-echo "🔧 Starting main inference..."
-/workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer_local_docker.sh \
-    $MODEL \
-    HEAD \
-    CodeActAgent \
-    $NUM_SAMPLES \
-    $MAX_TURNS \
-    $NUM_WORKERS \
-    $DATASET \
-    $SPLIT \
-    $NUM_RUNS \
-    swe
-echo "✅ Evaluation complete. Results saved in $EVAL_OUTPUT_DIR"
-echo
+# echo "🔧 Starting main inference..."
+# /workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer_local_docker.sh \
+#     $MODEL \
+#     HEAD \
+#     CodeActAgent \
+#     $NUM_SAMPLES \
+#     $MAX_TURNS \
+#     $NUM_WORKERS \
+#     $DATASET \
+#     $SPLIT \
+#     $NUM_RUNS \
+#     swe
+# echo "✅ Evaluation complete. Results saved in $EVAL_OUTPUT_DIR"
+# echo
 
 ##########################
 # --- TOOL CALL SUMMARY --#
@@ -151,13 +151,14 @@ echo "✅ Converted to: $SWEBENCH_JSONL"
 echo ""
 echo ">>> [3/5] LOCALIZATION REPORT"
 
-LOC_SUMMARY_OUTPUT="$PARENT_FOLDER/localization"
+LOC_SUMMARY_OUTPUT="$PARENT_FOLDER/localization_selected"
 mkdir -p "$LOC_SUMMARY_OUTPUT"
 
 python3 /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/generate_localisation_report.py \
     --model_name "$MODEL" \
     --predictions_path "$SWEBENCH_JSONL" \
     --report_dir "$LOC_SUMMARY_OUTPUT" \
+    --selected_ids "$CONFIG_ML" \
     --dataset_name "$DATASET" \
     --dataset_split "$SPLIT"
 
@@ -169,7 +170,7 @@ echo "✅ Localization summary saved to: $LOC_SUMMARY_OUTPUT"
 echo ""
 echo ">>> [4/5] TRAJECTORY EVALUATION"
 
-OUT_FINAL="$PARENT_FOLDER/final_eval"
+OUT_FINAL="$PARENT_FOLDER/final_eval_selected"
 mkdir -p "$OUT_FINAL"
 FINAL_PRED_PATH="$SWEBENCH_JSONL"
 
@@ -179,12 +180,14 @@ echo "" >> "$EXEC_SCRIPT"
 
 cat >> "$EXEC_SCRIPT" << EOF
 cd $OUT_FINAL
+echo "Current directory: $(pwd)"
 python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evaluate_trajectory_harsh_local.py \\
   --run_id "$MODEL" \\
   --predictions_path "$FINAL_PRED_PATH" \\
   --output_dir "$OUT_FINAL" \\
   --dataset_name "$DATASET" \\
-  --dataset_split "$SPLIT"
+  --dataset_split "$SPLIT"  \\
+  --selected_ids "$CONFIG_ML"
 EOF
 
 chmod +x "$EXEC_SCRIPT"
@@ -198,11 +201,11 @@ python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/evalu
   --predictions_path "$FINAL_PRED_PATH" \
   --output_dir "$OUT_FINAL" \
   --dataset_name "$DATASET" \
-  --dataset_split "$SPLIT"
+  --dataset_split "$SPLIT" \
+  --selected_ids "$CONFIG_ML"
 
 # EVAL_JSON=$(find "$OUT_FINAL" -type f -name "consolidated_report*.json" | head -n 1)
 EVAL_JSON=$(find "$OUT_FINAL" -type f -name "consolidated_report*.json" -print0 | xargs -0 ls -t | head -n 1)
-
 
 echo "✅ Evaluation completed: $EVAL_JSON"
 
@@ -212,14 +215,15 @@ echo "✅ Evaluation completed: $EVAL_JSON"
 echo ""
 echo ">>> [5/5] FILTERED LOCALIZATION SUMMARY"
 
-TOOL_SUMMARY_OUTPUT="$PARENT_FOLDER/bash_tool_call_summary_filtered_$MODEL"
+TOOL_SUMMARY_OUTPUT="$PARENT_FOLDER/bash_tool_call_summary_filtered_$MODEL_selected_ids"
 LOC_JSONL_FILE=$(find "$LOC_SUMMARY_OUTPUT" -type f -name "*localisation_report.jsonl" | head -n 1)
 
 python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/bash_tool_call_summary_filtered.py \
     --input_file "$JSONL_FILE" \
     --output_dir "$TOOL_SUMMARY_OUTPUT" \
     --loc_json "$LOC_JSONL_FILE" \
-    --eval_json "$EVAL_JSON"
+    --eval_json "$EVAL_JSON" \
+    --selected_ids "$CONFIG_ML"
 
 echo "✅ Filtered localization summary saved."
 
@@ -232,12 +236,14 @@ echo ">>> GENERATING FINAL RUN SUMMARY"
 echo python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/generate_run_summary.py \
     --input_file "$JSONL_FILE" \
     --eval_summary_file "$EVAL_JSON" \
-    --localization_report "$LOC_JSONL_FILE"
+    --localization_report "$LOC_JSONL_FILE" \
+    --selected_ids "$CONFIG_ML"
 
 python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/generate_run_summary.py \
     --input_file "$JSONL_FILE" \
     --eval_summary_file "$EVAL_JSON" \
-    --localization_report "$LOC_JSONL_FILE"
+    --localization_report "$LOC_JSONL_FILE" \
+    --selected_ids "$CONFIG_ML"
 
 echo "✅ Final summary generated."
 
