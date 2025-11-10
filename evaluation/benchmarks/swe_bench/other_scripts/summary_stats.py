@@ -9,6 +9,7 @@ import matplotlib.colors as mcolors
 import numpy as np
 import random
 import argparse
+from datetime import datetime
 
 
 LIST_OF_SUMMARY = {
@@ -28,6 +29,15 @@ LIST_OF_SUMMARY = {
 
     "Qwen480B_Baseline_CepoToolv2_Hard50": "/workspaces/OpenHands/evaluation/eval_llm_qwen480B_baseline_cepo_tool_v2_swebench_dev_50hard/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/Qwen3-Coder-480B-A35B-Instruct-FP8_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
 
+    "Qwen480B_LocPr5_phase4_think_CepoToolv2_Hard50": "/workspaces/OpenHands/evaluation/eval_llm_qwen480B_sb_dev_cepo_tool_v2_LocPr5_thinkNOstrreplace_ph4planphase_50hard/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/Qwen3-Coder-480B-A35B-Instruct-FP8_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+
+    "Qwen480B_Baseline_CepoToolv3_Hard50": "/workspaces/OpenHands/evaluation/eval_llm_qwen480B_baseline_cepo_tool_v3_swebench_dev_50hard/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/Qwen3-Coder-480B-A35B-Instruct-FP8_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+
+    "Qwen480B_Baseline_CepoToolv4_Hard50": "/workspaces/OpenHands/evaluation/eval_llm_qwen480B_baseline_cepo_tool_v4_swebench_dev_50hard/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/Qwen3-Coder-480B-A35B-Instruct-FP8_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+
+    "Qwen480B_Baseline_CepoToolv5_Hard50": "/workspaces/OpenHands/evaluation/eval_llm_qwen480B_baseline_cepo_tool_v5_swebench_dev_50hard/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/Qwen3-Coder-480B-A35B-Instruct-FP8_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
+
+
     "Qwen30B_Baseline_176": "/workspaces/OpenHands/evaluation/eval_runs_previous/eval_llm_qwen30B_sb_dev_baseline_cmd_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json",
 
     "Qwen30B_LOCPr5_176": "/workspaces/OpenHands/evaluation/eval_runs_previous/eval_llm_qwen30B_sb_dev_LocPr5_all/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_N_v0.56.0-no-hint-run_1/overall_summary.json"
@@ -35,6 +45,8 @@ LIST_OF_SUMMARY = {
 
 
 BASELINE = "Qwen480B_Baseline_Hard50"
+# Generate timestamp once at script start for consistency across all files
+TIMESTAMP = datetime.now().strftime('%Y%m%d_%H%M%S')
 
 
 def load_json(json_path):
@@ -252,12 +264,12 @@ def create_comparison_plots(all_stats, baseline_name="Baseline", output_dir="./"
             axes1[2].text(i, v + 0.2, f'{v:.2f}', ha='center', va='bottom', fontweight='bold', rotation=90)
 
         plt.tight_layout()
-        filepath1 = os.path.join(output_dir, 'comparison_report_resolution.png')
+        filepath1 = os.path.join(output_dir, f'comparison_report_resolution_{TIMESTAMP}.png')
 
         print("[DEBUG] Saving first plot")
         sys.stdout.flush()
         plt.savefig(filepath1, dpi=600, bbox_inches='tight')
-        print("\n✓ Saved: comparison_report_resolution.png")
+        print(f"\n✓ Saved: comparison_report_resolution_{TIMESTAMP}.png")
         plt.close(fig1)
 
         print("[DEBUG] Creating second plot (Performance metrics)")
@@ -294,14 +306,13 @@ def create_comparison_plots(all_stats, baseline_name="Baseline", output_dir="./"
             axes2[2].text(i, v + 0.01, f'{v:.4f}', ha='center', va='bottom', fontweight='bold', rotation=90)
 
         plt.tight_layout()
-        filepath2 = os.path.join(output_dir, 'comparison_report_performance.png')
+        filepath2 = os.path.join(output_dir, f'comparison_report_performance_{TIMESTAMP}.png')
 
         print("[DEBUG] Saving second plot")
         sys.stdout.flush()
         plt.savefig(filepath2, dpi=600, bbox_inches='tight')
-        print("\n✓ Saved: comparison_report_performance.png")
+        print(f"\n✓ Saved: comparison_report_performance_{TIMESTAMP}.png")
         plt.close(fig2)
-        # Existing code...
 
         print("[DEBUG] Creating third plot (Perfect Precision and Recall)")
         sys.stdout.flush()
@@ -350,17 +361,14 @@ def create_comparison_plots(all_stats, baseline_name="Baseline", output_dir="./"
         for i, v in enumerate(recall_0p9_1p0):
             axes3[1][1].text(i, v + 0.01, f'{v:.4f}', ha='center', va='bottom', fontweight='bold', rotation=90)
 
-
         plt.tight_layout()
-        filepath3 = os.path.join(output_dir, 'comparison_report_perfect_metrics.png')
+        filepath3 = os.path.join(output_dir, f'comparison_report_perfect_metrics_{TIMESTAMP}.png')
 
         print("[DEBUG] Saving third plot")
         sys.stdout.flush()
         plt.savefig(filepath3, dpi=600, bbox_inches='tight')
-        print("\n✓ Saved: comparison_report_perfect_metrics.png")
+        print(f"\n✓ Saved: comparison_report_perfect_metrics_{TIMESTAMP}.png")
         plt.close(fig3)
-
-
 
         print("[DEBUG] Completed create_comparison_plots")
         sys.stdout.flush()
@@ -405,13 +413,13 @@ def create_grand_total_tool_calls_plot(all_stats, baseline_name="Baseline", outp
         sys.stdout.flush()
 
         plt.tight_layout()
-        filepath = os.path.join(output_dir, 'grand_total_tool_calls.png')
+        filepath = os.path.join(output_dir, f'grand_total_tool_calls_{TIMESTAMP}.png')
 
         print(f"[DEBUG] Saving to {filepath}")
         sys.stdout.flush()
 
         plt.savefig(filepath, dpi=300, bbox_inches='tight')
-        print("✓ Saved: grand_total_tool_calls.png")
+        print(f"✓ Saved: grand_total_tool_calls_{TIMESTAMP}.png")
 
         print("[DEBUG] Closing figure")
         sys.stdout.flush()
@@ -472,9 +480,9 @@ def create_tool_calls_all_tools_plot(all_stats, baseline_name="Baseline", output
 
         fig.suptitle('Tool Calls by Experiment', fontsize=16, fontweight='bold', y=0.995)
         plt.tight_layout()
-        filepath = os.path.join(output_dir, 'tool_calls_all_tools_comparison.png')
+        filepath = os.path.join(output_dir, f'tool_calls_all_tools_comparison_{TIMESTAMP}.png')
         plt.savefig(filepath, dpi=300, bbox_inches='tight')
-        print("✓ Saved: tool_calls_all_tools_comparison.png")
+        print(f"✓ Saved: tool_calls_all_tools_comparison_{TIMESTAMP}.png")
         plt.close(fig)
 
     except Exception as e:
@@ -512,7 +520,7 @@ def create_tool_calls_per_tool_plots(all_stats, baseline_name="Baseline", output
             ax.grid(axis='y', alpha=0.3)
 
             safe_tool_name = tool.replace('/', '_').replace(' ', '_')
-            filename = f'tool_{safe_tool_name}.png'
+            filename = f'tool_{safe_tool_name}_{TIMESTAMP}.png'
             filepath = os.path.join(output_dir, filename)
             plt.savefig(filepath, dpi=300, bbox_inches='tight')
             plt.close(fig)
@@ -588,7 +596,7 @@ def create_filter_analysis_plots(all_data, all_stats, baseline_name="Baseline", 
 
                 plt.tight_layout()
                 safe_compare_name = compare_name.replace(' ', '_').replace('/', '_')
-                filename = f'filter_{filter_type}_{baseline_name}_{safe_compare_name}.png'
+                filename = f'filter_{filter_type}_{baseline_name}_{safe_compare_name}_{TIMESTAMP}.png'
                 filepath = os.path.join(output_dir, filename)
                 plt.savefig(filepath, dpi=300, bbox_inches='tight')
                 plt.close(fig)
@@ -756,6 +764,7 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
 
     print(f"Output directory: {output_dir}")
+    print(f"Timestamp: {TIMESTAMP}")
     print("Loading experiment data...")
 
     all_data = {}
@@ -805,7 +814,6 @@ def main():
             print(f"[DEBUG] Completed recall_eq_1 filter for {name}")
             sys.stdout.flush()
 
-
     print("\n" + "="*80)
     print("GENERATING VISUALIZATIONS")
     print("="*80)
@@ -836,6 +844,7 @@ def main():
     print("✓ REPORT GENERATION COMPLETE")
     print("="*80)
     print(f"\nAll outputs saved to: {os.path.abspath(output_dir)}")
+    print(f"Timestamp used: {TIMESTAMP}")
 
 
 if __name__ == "__main__":
