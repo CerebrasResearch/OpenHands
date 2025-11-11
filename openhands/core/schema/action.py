@@ -34,6 +34,10 @@ class ActionType(str, Enum):
     """Runs a IPython cell.
     """
 
+    RUN_IPYTHON_SUMMARY = 'run_ipython_summary'
+    """Runs a IPython cell and then routes to LLM to generate summary of output.
+    """
+
     BROWSE = 'browse'
     """Opens a web page.
     """

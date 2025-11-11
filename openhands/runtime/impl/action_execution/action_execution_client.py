@@ -29,6 +29,7 @@ from openhands.events.action import (
     FileReadAction,
     FileWriteAction,
     IPythonRunCellAction,
+    IPythonRunCellSummaryAction
 )
 from openhands.events.action.action import Action
 from openhands.events.action.files import FileEditSource
@@ -269,12 +270,22 @@ class ActionExecutionClient(Runtime):
         else:
             return ''
 
+    def ipython_generate_summary(self, action: IPythonRunCellSummaryAction) -> Observation:
+        obs = self.run_ipython(IPythonRunCellAction(code=action.code, thought=action.thought))
+        content = obs.content
+        
+        return obs
+
+
     def send_action_for_execution(self, action: Action) -> Observation:
         if (
             isinstance(action, FileEditAction)
             and action.impl_source == FileEditSource.LLM_BASED_EDIT
         ):
             return self.llm_based_edit(action)
+
+        if isinstance(action, IPythonRunCellSummaryAction):
+            return self.ipython_generate_summary(action)
 
         # set timeout to default if not set
         if action.timeout is None:
@@ -341,6 +352,9 @@ class ActionExecutionClient(Runtime):
         return self.send_action_for_execution(action)
 
     def run_ipython(self, action: IPythonRunCellAction) -> Observation:
+        return self.send_action_for_execution(action)
+
+    def run_ipython_summary(self, action: IPythonRunCellSummaryAction) -> Observation:
         return self.send_action_for_execution(action)
 
     def read(self, action: FileReadAction) -> Observation:

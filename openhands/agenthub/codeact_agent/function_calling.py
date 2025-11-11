@@ -36,6 +36,7 @@ from openhands.events.action import (
     FileEditAction,
     FileReadAction,
     IPythonRunCellAction,
+    IPythonRunCellSummaryAction,
     MessageAction,
     TaskTrackingAction,
 )
@@ -407,7 +408,8 @@ def response_to_actions(
                 func_name = tool_call.function.name
                 code = f'print({func_name}(**{arguments}))'
                 logger.debug(f'LocAgentTOOL CALL in CodeAct: {func_name} with code: {code}')
-                action = IPythonRunCellAction(code=code)
+                # action = IPythonRunCellAction(code=code)
+                action = IPythonRunCellSummaryAction(code=code)
 
             elif tool_call.function.name in LOCAGENT_ALT_FUNCTIONS:
                 action = handle_alternate_locagent_tool(tool_call, arguments)
@@ -436,26 +438,6 @@ def response_to_actions(
                 wait_for_response=True,
             )
         )
-
-        # if assistant_msg.content and len(assistant_msg.content):
-        #     content = str(assistant_msg.content)
-        #     wait_for_response = False
-        #     logger.debug(f'No ToolCall and NON empty assistant_msg')
-        # elif assistant_msg.reasoning_content and len(assistant_msg.reasoning_content):
-        #     content = str(assistant_msg.reasoning_content)
-        #     wait_for_response = False
-        #     logger.debug(f'No ToolCall and EMPTY assistant_msg, using REASONING CONTENT')
-        # else:
-        #     content = ''
-        #     wait_for_response = True
-        #     logger.debug(f'No ToolCall and EMPTY assistant_msg, EMPTY REASONING CONTENT, defaulting to wait_for_response=True')
-
-        # actions.append(
-        #     MessageAction(
-        #         content=content,
-        #         wait_for_response=wait_for_response,
-        #     )
-        # )
 
 
     # Add response id to actions
@@ -525,5 +507,6 @@ def handle_alternate_locagent_tool(tool_call, arguments):
 
     code = f'print({func_name}(**{arguments}))'
     logger.debug(f'LocAgentTOOL ALTERNATE CALL in CodeAct: {func_name} with code: {code}')
-    action = IPythonRunCellAction(code=code)
+    # action = IPythonRunCellAction(code=code)
+    action = IPythonRunCellSummaryAction(code=code)
     return action

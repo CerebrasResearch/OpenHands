@@ -17,6 +17,7 @@ from openhands.events.action.browse import BrowseInteractiveAction, BrowseURLAct
 from openhands.events.action.commands import (
     CmdRunAction,
     IPythonRunCellAction,
+    IPythonRunCellSummaryAction
 )
 from openhands.events.action.empty import NullAction
 from openhands.events.action.files import (
@@ -31,6 +32,7 @@ actions = (
     NullAction,
     CmdRunAction,
     IPythonRunCellAction,
+    IPythonRunCellSummaryAction,
     BrowseURLAction,
     BrowseInteractiveAction,
     FileReadAction,

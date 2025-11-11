@@ -62,3 +62,28 @@ class IPythonRunCellAction(Action):
     @property
     def message(self) -> str:
         return f'Running Python code interactively: {self.code}'
+
+
+@dataclass
+class IPythonRunCellSummaryAction(Action):
+    code: str
+    thought: str = ''
+    include_extra: bool = (
+        True  # whether to include CWD & Python interpreter in the output
+    )
+    action: str = ActionType.RUN_IPYTHON_SUMMARY
+    runnable: ClassVar[bool] = True
+    confirmation_state: ActionConfirmationStatus = ActionConfirmationStatus.CONFIRMED
+    security_risk: ActionSecurityRisk = ActionSecurityRisk.UNKNOWN
+    kernel_init_code: str = ''  # code to run in the kernel (if the kernel is restarted)
+
+    def __str__(self) -> str:
+        ret = '**IPythonRunCellSummaryAction**\n'
+        if self.thought:
+            ret += f'THOUGHT: {self.thought}\n'
+        ret += f'CODE:\n{self.code}'
+        return ret
+
+    @property
+    def message(self) -> str:
+        return f'Running Python code interactively: {self.code}. Summry of output will be generated.'

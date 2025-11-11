@@ -22,6 +22,10 @@ class ObservationType(str, Enum):
     """Runs a IPython cell.
     """
 
+    RUN_IPYTHON_SUMMARY = 'run_ipython_summary'
+    """Runs a IPython cell and then routes to LLM to generate summary of output.
+    """
+
     CHAT = 'chat'
     """A message from the user
     """

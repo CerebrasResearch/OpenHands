@@ -17,6 +17,7 @@ from openhands.events.action import (
     FileEditAction,
     FileReadAction,
     IPythonRunCellAction,
+    IPythonRunCellSummaryAction,
     MessageAction,
     TaskTrackingAction,
 )
@@ -225,6 +226,7 @@ class ConversationMemory:
                 AgentDelegateAction,
                 AgentThinkAction,
                 IPythonRunCellAction,
+                IPythonRunCellSummaryAction,
                 FileEditAction,
                 FileReadAction,
                 BrowseInteractiveAction,

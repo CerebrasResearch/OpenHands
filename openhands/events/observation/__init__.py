@@ -10,6 +10,7 @@ from openhands.events.observation.commands import (
     CmdOutputMetadata,
     CmdOutputObservation,
     IPythonRunCellObservation,
+    IPythonRunCellSummaryObservation
 )
 from openhands.events.observation.delegate import AgentDelegateObservation
 from openhands.events.observation.empty import (
@@ -35,6 +36,7 @@ __all__ = [
     'CmdOutputObservation',
     'CmdOutputMetadata',
     'IPythonRunCellObservation',
+    'IPythonRunCellSummaryObservation',
     'BrowserOutputObservation',
     'FileReadObservation',
     'FileWriteObservation',

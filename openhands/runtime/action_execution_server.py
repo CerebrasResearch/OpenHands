@@ -46,6 +46,7 @@ from openhands.events.action import (
     FileReadAction,
     FileWriteAction,
     IPythonRunCellAction,
+    IPythonRunCellSummaryAction
 )
 from openhands.events.event import FileEditSource, FileReadSource
 from openhands.events.observation import (
@@ -56,6 +57,7 @@ from openhands.events.observation import (
     FileReadObservation,
     FileWriteObservation,
     IPythonRunCellObservation,
+    IPythonRunCellSummaryObservation,
     Observation,
 )
 from openhands.events.serialization import event_from_dict, event_to_dict
