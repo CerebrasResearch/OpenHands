@@ -103,7 +103,7 @@ class CodeActAgent(Agent):
         self.llm = self.llm_registry.get_router(self.config)
 
         # NOTE: reflection
-        self.auto_reflect_enabled = os.getenv("AUTO_REFLECTION_ENABLED", "true").lower() == "true"
+        self.auto_reflect_enabled = os.getenv("AUTO_REFLECTION_ENABLED", "false").lower() == "true"
         self.auto_reflect_prob = float(os.getenv("AUTO_REFLECTION_PROB", "0.10"))
         self.auto_reflect_reactive = os.getenv("AUTO_REFLECTION_REACTIVE_ENABLED", "true").lower() == "true"
         self.auto_reflect_lookback = int(os.getenv("AUTO_REFLECTION_LOOKBACK_WINDOW", "5"))
@@ -112,7 +112,7 @@ class CodeActAgent(Agent):
             (
                 "Look back at the last {n} steps. Are you making good progress, or should you "
                 "step back and reconsider your approach? If you're off-track, propose "
-                "concrete adjustments and the single next best action/tool to try."
+                "concrete adjustments/fixes and the single next best action/tool to try."
             ),
         )
 
@@ -226,7 +226,7 @@ class CodeActAgent(Agent):
             if self.auto_reflect_reactive:
                 is_last_turn_tool_error, tool_call_error_message =self._last_turn_has_tool_error(condensed_history)
                 if is_last_turn_tool_error and not self._last_action_is_think(condensed_history):
-                    return self._emit_reflection(f"I encountered a tool call with the following error: {tool_call_error_message}. \nI need to think about it and propose concrete adjustments plus the single next best action/tool.")
+                    return self._emit_reflection(f"I encountered a tool call with the following error: {tool_call_error_message}. \nI need to think about it and propose concrete fixes for a valid tool call")
 
             # NOTE: reflection case 1: Probablistically do general last N step reflection
             # Let's do not break any pending actions
@@ -247,6 +247,7 @@ class CodeActAgent(Agent):
 
         params: dict = {
             'messages': messages,
+            'logprobs': True,
         }
 
         params['tools'] = check_tools(self.tools, self.llm.config)
@@ -256,9 +257,7 @@ class CodeActAgent(Agent):
             )
         }
 
-        logger.debug(f'Last utterance input to LLM: {messages[-1]}')
         response = self.llm.completion(**params)
-        logger.debug(f'Response from LLM: {response}')
         try:
             actions = self.response_to_actions(response)
         # NOTE: reflection case 3: cope with tool parse failures

@@ -22,6 +22,15 @@ max_output_tokens = 16384
 max_message_chars = 50000
 native_tool_calling = true
 
+[llm.cepov3_optillm_qwen30b]
+model="openai/Qwen/Qwen3-Coder-30B-A3B-Instruct"
+base_url="http://localhost:10010/v1"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+native_tool_calling = true
+log_completions = true
+
 
 [agent]
 enable_history_truncation = true
@@ -30,14 +39,6 @@ llm_config = "llm.qwen_coder_30b_small"
 [sandbox]
 timeout = 120
 
-[llm]
-model="openai/qwen-coder-30b-small" ##model_name will be from litellm config settings.
-api_key="serving-on-vllm"
-base_url="http://0.0.0.0:4000/"
-max_input_tokens = 65384
-max_output_tokens = 16384
-max_message_chars = 50000
-native_tool_calling = true
 
 [condenser.summarizer_for_eval_gptoss-120b]
 type = "llm"

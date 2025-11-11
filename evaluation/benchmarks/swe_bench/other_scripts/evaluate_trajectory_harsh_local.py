@@ -222,7 +222,7 @@ class SWEBenchEvaluator:
         cmd = [
             "python", "-m", "swebench.harness.run_evaluation",
             "--dataset_name", f"{self.dataset_name}",
-            "--max_workers", "15",
+            "--max_workers", "5",
             "--cache_level", "none",
             "--clean", "True",
             "--predictions_path", self.predictions_path,

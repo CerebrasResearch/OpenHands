@@ -31,8 +31,9 @@ echo "========================================"
 #   ./run.sh gen_and_eval
 MODE=${1:-gen_and_eval}   # inference_only | eval_only | gen_and_eval
 
-EVAL_OUTPUT_DIR="/workspaces/OpenHands/evaluation/evaluation_outputs/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/qwen-coder-30b-small_maxiter_100_test_1105/"
-MODEL="llm.qwen_coder_30b_small"
+EVAL_OUTPUT_DIR="/workspaces/OpenHands/evaluation/evaluation_outputs/outputs/princeton-nlp__SWE-bench-dev/CodeActAgent/cepov3_optillm_qwen30b_maxiter_100_N_50_baseline/"
+# MODEL="llm.qwen_coder_30b_small"
+MODEL="llm.cepov3_optillm_qwen30b"
 LOCAL_DOCKER_DIR="/workspaces/Openhands/swebench_dockers_for_eval/swebench_dockers/dev/docker_images/"
 CONFIG_ML="/workspaces/OpenHands/evaluation/benchmarks/swe_bench/config_2.toml"
 MAX_TURNS=100
@@ -53,6 +54,7 @@ export DEBUG=1
 export EVAL_SKIP_MAXIMUM_RETRIES_EXCEEDED=true
 export LOCAL_DOCKER_IMAGE_DIR=$LOCAL_DOCKER_DIR
 export CONFIG_ML=$CONFIG_ML
+export OPENAI_API_KEY="serving-on-vllm"
 
 ##########################
 # ----- CONFIG LOG ------#
