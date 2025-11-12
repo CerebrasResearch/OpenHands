@@ -1,0 +1,172 @@
+[core]
+workspace_base="/workspaces"
+search_api_key="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"
+save_trajectory_path="/workspaces/OpenHands/trajectories2.json"
+git_user_name="aarti-cerebras"
+git_user_email="aarti@cerebras.net"
+run_as_openhands=false
+
+
+[llm.qwen_coder_30b_small]
+model="openai/qwen-coder-30b-small" ## model_name will be from litellm config settings.
+api_key="serving-on-vllm"
+base_url="http://0.0.0.0:4000/"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+native_tool_calling = true
+
+
+
+
+[llm.cerebras_qwen_480b]
+model="cerebras/qwen-3-coder-480b"
+api_key="csk-3v5mn3xykcdv5e2kk53cr59x33yxdhr4cxctw26kpct25f46"
+base_url="https://api.cerebras.ai/v1/"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+log_completions = true
+
+[llm.cerebras_qwen_480b_key2]
+model="cerebras/qwen-3-coder-480b"
+api_key="csk-rj39jynfnh2cep8tvyd6e92pt4y3hvw9hk84dn5jpeffekcd"
+base_url="https://api.cerebras.ai/v1/"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+log_completions = true
+
+
+[llm.cerebras_qwen_480b_key3]
+model="cerebras/qwen-3-coder-480b"
+api_key="csk-4293eyrhrhf9mt9f954dvtx89d5hmcrjpmv54f3f24k596yt"
+base_url="https://api.cerebras.ai/v1/"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+log_completions = true
+
+
+[llm.together_qwen_480b]
+model="together_ai/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
+api_key="d8762e8d418b93a47f7cb11bdbb952b9cf5b3c0b4948b38fcfe70445c255ae1b"
+base_url="https://api.together.xyz/v1/"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+log_completions = true
+
+
+[llm.gptoss-120b]
+model="openai/gpt-oss-120b"
+api_key="serving-on-vllm"
+base_url="http://0.0.0.0:26573/"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+log_completions = true
+
+
+[llm.cepo_optillm_qwen30b]
+model="openai/Qwen/Qwen3-Coder-30B-A3B-Instruct"
+api_key="serving-on-vllm"
+base_url="http://localhost:8765/v1"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+log_completions = true
+
+[llm.cepov4_optillm_qwen480b_together]
+model="together_ai/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
+api_key="d8762e8d418b93a47f7cb11bdbb952b9cf5b3c0b4948b38fcfe70445c255ae1b"
+base_url="http://localhost:8884/v1"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+log_completions = true
+
+[llm.cepov5_optillm_qwen480b_together]
+model="together_ai/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
+api_key="d8762e8d418b93a47f7cb11bdbb952b9cf5b3c0b4948b38fcfe70445c255ae1b"
+base_url="http://localhost:8885/v1"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+log_completions = true
+
+
+[llm.cepov7_optillm_qwen480b_together]
+model="together_ai/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
+api_key="d8762e8d418b93a47f7cb11bdbb952b9cf5b3c0b4948b38fcfe70445c255ae1b"
+base_url="http://localhost:8887/v1"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+log_completions = true
+
+[llm.cepov8_optillm_qwen480b_together]
+model="together_ai/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
+api_key="d8762e8d418b93a47f7cb11bdbb952b9cf5b3c0b4948b38fcfe70445c255ae1b"
+base_url="http://localhost:8888/v1"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+log_completions = true
+
+
+[llm.cepov9_optillm_qwen480b_together]
+model="together_ai/Qwen/Qwen3-Coder-480B-A35B-Instruct-FP8"
+api_key="d8762e8d418b93a47f7cb11bdbb952b9cf5b3c0b4948b38fcfe70445c255ae1b"
+base_url="http://localhost:8889/v1"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+log_completions = true
+
+
+[llm.glm4p6_together]
+model="together_ai/zai-org/GLM-4.6"
+api_key="d8762e8d418b93a47f7cb11bdbb952b9cf5b3c0b4948b38fcfe70445c255ae1b"
+base_url="https://api.together.xyz/v1/"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+log_completions = true
+top_p = 0.95
+top_k = 40
+
+[llm.cepov2_glm4p6_together]
+model="together_ai/zai-org/GLM-4.6"
+api_key="d8762e8d418b93a47f7cb11bdbb952b9cf5b3c0b4948b38fcfe70445c255ae1b"
+base_url="http://localhost:8882/v1"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
+log_completions = true
+top_p = 0.95
+top_k = 40
+
+
+[agent]
+enable_history_truncation = true
+enable_locagent_tools_in_codeact = false
+llm_config = "llm.qwen_coder_30b_small"
+
+[agent.LocAgent]
+llm_config = 'qwen_coder_30b_small'
+enable_history_truncation = true
+
+
+
+[sandbox]
+timeout = 120
+
+
+[llm]
+model="openai/qwen-coder-30b-small" ##model_name will be from litellm config settings.
+api_key="serving-on-vllm"
+base_url="http://0.0.0.0:31824/"
+max_input_tokens = 65384
+max_output_tokens = 16384
+max_message_chars = 50000
