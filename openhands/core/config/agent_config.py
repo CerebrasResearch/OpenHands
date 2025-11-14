@@ -63,6 +63,8 @@ class AgentConfig(BaseModel):
     """for cases when enable_think is true - use_think_plan_brainstorm_tool=true, then use `think_plan_brainstorm` tool else use `think` tool """
     enable_str_replace_edit_think_check: bool = Field(default=False)
     "whether to replace str_replace_editor in editing modes with message to invoke think tool if not called earlier"
+    enable_summary_model: bool = Field(default=False)
+    """Whether to enable a separate model for summarization tasks."""
     condenser: CondenserConfig = Field(
         # The default condenser is set to the conversation window condenser -- if
         # we use NoOp and the conversation hits the LLM context length limit,

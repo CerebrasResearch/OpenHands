@@ -40,6 +40,8 @@ from openhands.events.observation import (
     NullObservation,
     Observation,
     UserRejectObservation,
+    IPythonRunCellObservation,
+    IPythonRunCellSummaryObservation
 )
 from openhands.events.serialization import event_to_dict, observation_from_dict
 from openhands.events.serialization.action import ACTION_TYPE_TO_CLASS
@@ -270,12 +272,42 @@ class ActionExecutionClient(Runtime):
         else:
             return ''
 
-    def ipython_generate_summary(self, action: IPythonRunCellSummaryAction) -> Observation:
-        obs = self.run_ipython(IPythonRunCellAction(code=action.code, thought=action.thought))
-        content = obs.content
-        
-        return obs
 
+    def ipython_generate_summary(self, action: IPythonRunCellSummaryAction, num_retries=3) -> Observation:
+        USR_MSG = """
+        Please summarize the following into a concise description. Focus on the main functionality and purpose, avoiding implementation details. The summary should be clear and informative, suitable for someone who wants to understand the intent without reading through the entire cell.
+
+        {input_to_summarize}
+
+        """
+        obs = self.run_ipython(IPythonRunCellAction(code=action.code, thought=action.thought))
+        if isinstance(obs, ErrorObservation):
+            return obs
+        if not isinstance(obs, IPythonRunCellObservation):
+            raise ValueError(
+                f'Expected IPythonRunCellObservation, got {type(obs)}: {str(obs)}'
+            )
+        content = obs.content
+        if self.config.get_agent_config().enable_summary_model:
+            while num_retries > 0:
+                messages = [
+                    {
+                        'role': 'user',
+                        'content': USR_MSG.format(input_to_summarize=content)
+
+                    },
+                ]
+                resp = self.summary_model_llm.completion(messages=messages)
+                text_response = resp['choices'][0]['message']['content']
+                if resp is not None:
+                    ret_obs = IPythonRunCellSummaryObservation(
+                        content=text_response,
+                        code=action.code,
+                    )
+                    ret_obs.llm_metrics = self.summary_model_llm.metrics
+                    return ret_obs
+                num_retries -= 1
+            return obs
 
     def send_action_for_execution(self, action: Action) -> Observation:
         if (

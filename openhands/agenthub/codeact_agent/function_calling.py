@@ -122,7 +122,7 @@ def set_security_risk(action: Action, arguments: dict) -> None:
 
 
 def response_to_actions(
-    response: ModelResponse, mcp_tool_names: list[str] | None = None, is_last_tool_called = True
+    response: ModelResponse, mcp_tool_names: list[str] | None = None, is_last_tool_called = True, enable_summary_model: bool = False
 ) -> list[Action]:
     actions: list[Action] = []
     assert len(response.choices) == 1, 'Only one choice is supported for now'
@@ -408,11 +408,16 @@ def response_to_actions(
                 func_name = tool_call.function.name
                 code = f'print({func_name}(**{arguments}))'
                 logger.debug(f'LocAgentTOOL CALL in CodeAct: {func_name} with code: {code}')
-                # action = IPythonRunCellAction(code=code)
-                action = IPythonRunCellSummaryAction(code=code)
+                if not enable_summary_model:
+                    action = IPythonRunCellAction(code=code)
+                else:
+                    if tool_call.function.name == "explore_tree_structure":
+                        action = IPythonRunCellSummaryAction(code=code)
+                    else:
+                        action = IPythonRunCellAction(code=code)
 
             elif tool_call.function.name in LOCAGENT_ALT_FUNCTIONS:
-                action = handle_alternate_locagent_tool(tool_call, arguments)
+                action = handle_alternate_locagent_tool(tool_call, arguments, enable_summary_model)
             else:
                 logger.debug(f"------- tool_call: {tool_call}, arguments: {arguments}, LOCAGENT_FUNCTIONS: {LOCAGENT_FUNCTIONS}")
                 logger.debug(f"------- tool_call: {tool_call}, arguments: {arguments}, LOCAGENT_ALT_FUNCTIONS: {LOCAGENT_ALT_FUNCTIONS}")
@@ -451,12 +456,8 @@ def response_to_actions(
     return actions
 
 
-def get_last_call_to_think_plan_brainstorm():
-    pass
 
-
-
-def handle_alternate_locagent_tool(tool_call, arguments):
+def handle_alternate_locagent_tool(tool_call, arguments, enable_summary_model: bool = False) -> Action:
 
     code_map = {
         "explore_code_structure": "explore_tree_structure",
@@ -507,6 +508,11 @@ def handle_alternate_locagent_tool(tool_call, arguments):
 
     code = f'print({func_name}(**{arguments}))'
     logger.debug(f'LocAgentTOOL ALTERNATE CALL in CodeAct: {func_name} with code: {code}')
-    # action = IPythonRunCellAction(code=code)
-    action = IPythonRunCellSummaryAction(code=code)
+    if not enable_summary_model:
+        action = IPythonRunCellAction(code=code)
+    else:
+        if tool_call.function.name == "explore_code_structure" or tool_call.function.name == 'get_code_structure_overview_with_code_comments':
+            action = IPythonRunCellSummaryAction(code=code)
+        else:
+            action = IPythonRunCellAction(code=code)
     return action

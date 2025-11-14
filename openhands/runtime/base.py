@@ -188,6 +188,26 @@ class Runtime(FileEditRuntimeMixin):
             llm_registry=llm_registry,
         )
 
+        ## Summary model
+        self.enable_summary_model = self.config.get_agent_config().enable_summary_model
+        if self.enable_summary_model:
+            summary_model_config = self.config.get_llm_config('summary_model')
+
+            # manually set the model name for the draft editor LLM to distinguish token costs
+            if summary_model_config.caching_prompt:
+                logger.debug(
+                    'It is not recommended to cache summary model LLM prompts as it may incur high costs for the same prompt. '
+                    'Automatically setting caching_prompt=false.'
+                )
+                summary_model_config.caching_prompt = False
+
+            self.summary_model_llm = llm_registry.get_llm(
+                'summary_model', summary_model_config
+            )
+            logger.debug(
+                f'[Summary Model functionality] enabled with LLM: {self.summary_model_llm}'
+            )
+
         self.user_id = user_id
         self.git_provider_tokens = git_provider_tokens
         self.runtime_status = None

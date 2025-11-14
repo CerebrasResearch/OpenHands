@@ -86,4 +86,4 @@ class IPythonRunCellSummaryAction(Action):
 
     @property
     def message(self) -> str:
-        return f'Running Python code interactively: {self.code}. Summry of output will be generated.'
+        return f'Running Python code interactively: {self.code}. Summary of output will be generated.'

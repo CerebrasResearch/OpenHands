@@ -34,6 +34,7 @@ from openhands.events.observation import (
     FileEditObservation,
     FileReadObservation,
     IPythonRunCellObservation,
+    IPythonRunCellSummaryObservation,
     TaskTrackingObservation,
     UserRejectObservation,
 )
@@ -451,6 +452,9 @@ class ConversationMemory:
                         ].text += f'\n\nNote: All {len(obs.image_urls)} image(s) in this output were invalid or empty and have been filtered. The agent should use alternative methods to access visual information.'  # type: ignore[union-attr]
 
             message = Message(role='user', content=content)
+        elif isinstance(obs, IPythonRunCellSummaryObservation):
+            text = truncate_content(obs.content, max_message_chars)
+            message = Message(role='user', content=[TextContent(text=text)])
         elif isinstance(obs, FileEditObservation):
             text = truncate_content(str(obs), max_message_chars)
             message = Message(role='user', content=[TextContent(text=text)])

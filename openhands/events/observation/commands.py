@@ -235,10 +235,10 @@ class IPythonRunCellObservation(Observation):
 @dataclass
 class IPythonRunCellSummaryObservation(Observation):
     """This data class represents the output of a IPythonRunCellSummaryAction."""
+    # class SummaryObservation(Observation):
 
     code: str
-    observation: str = ObservationType.RUN_IPYTHON
-    image_urls: list[str] | None = None
+    observation: str = ObservationType.RUN_IPYTHON_SUMMARY
 
     @property
     def error(self) -> bool:
@@ -246,14 +246,13 @@ class IPythonRunCellSummaryObservation(Observation):
 
     @property
     def message(self) -> str:
-        return 'Code executed in IPython cell.'
+        return 'Code executed in IPython cell and summarized by llm'
 
     @property
     def success(self) -> bool:
         return True  # IPython cells are always considered successful
 
     def __str__(self) -> str:
-        result = f'**IPythonRunCellObservation**\n{self.content}'
-        if self.image_urls:
-            result += f'\nImages: {len(self.image_urls)}'
+        result = f'**SummaryObservation** of {self.code}\n{self.content}'
+
         return result

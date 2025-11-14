@@ -69,6 +69,7 @@ from openhands.utils.shutdown_listener import sleep_if_should_continue
 USE_HINT_TEXT = os.environ.get('USE_HINT_TEXT', 'false').lower() == 'true'
 RUN_WITH_BROWSING = os.environ.get('RUN_WITH_BROWSING', 'false').lower() == 'true'
 ENABLE_LLM_EDITOR = os.environ.get('ENABLE_LLM_EDITOR', 'false').lower() == 'true'
+ENABLE_SUMMARY_MODEL = os.environ.get('ENABLE_SUMMARY_MODEL', 'false').lower() == 'true'
 
 ## Note: Do not forget to also modify AgentConfig to use these values
 USE_LOCAGENT_TOOLS = os.environ.get('USE_LOCAGENT_TOOLS', 'false').lower() == 'true'
@@ -277,6 +278,9 @@ def get_config(
     # get 'draft_editor' config if exists
     config.set_llm_config(get_llm_config_arg('draft_editor'), 'draft_editor')
 
+    # get 'summary_model' config if exists
+    config.set_llm_config(get_llm_config_arg('summary_model'), 'summary_model')
+
     model_routing_config = get_model_routing_config_arg()
     model_routing_config.llms_for_routing = (
         get_llms_for_routing_config()
@@ -296,7 +300,8 @@ def get_config(
         enable_alternate_locagent_tools=ALT_LOCAGENT_TOOLS,
         enable_code_comments_tool_in_alternate_locagent_tools=ENABLE_CODE_COMMENTS,
         use_think_plan_brainstorm_tool=THINK_PLAN_BRAINSTORM,
-        enable_str_replace_edit_think_check=ENABLE_STR_REPLACE_EDIT_THINK_CHECK
+        enable_str_replace_edit_think_check=ENABLE_STR_REPLACE_EDIT_THINK_CHECK,
+        enable_summary_model=ENABLE_SUMMARY_MODEL
     )
     config.set_agent_config(agent_config)
 

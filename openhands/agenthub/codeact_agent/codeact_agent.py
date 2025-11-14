@@ -371,7 +371,8 @@ class CodeActAgent(Agent):
         return codeact_function_calling.response_to_actions(
             response,
             mcp_tool_names=list(self.mcp_tools.keys()),
-            is_last_tool_called=is_last_tool_called
+            is_last_tool_called=is_last_tool_called,
+            enable_summary_model=self.config.enable_summary_model,
         )
 
     def get_last_tool_call(self, state: State, tool_args):
