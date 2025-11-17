@@ -1,0 +1,12 @@
+selected_ids = [
+    "django__django-14792",
+    "astropy__astropy-14365",
+    "mwaskom__seaborn-3187",
+    "matplotlib__matplotlib-20676",
+    "psf__requests-2931",
+    "sphinx-doc__sphinx-7454",
+    "pylint-dev__pylint-6386",
+    "pydata__xarray-3993",
+    "scikit-learn__scikit-learn-25747",
+    "sympy__sympy-15976"
+]

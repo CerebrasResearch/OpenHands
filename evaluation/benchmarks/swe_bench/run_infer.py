@@ -70,6 +70,8 @@ USE_HINT_TEXT = os.environ.get('USE_HINT_TEXT', 'false').lower() == 'true'
 RUN_WITH_BROWSING = os.environ.get('RUN_WITH_BROWSING', 'false').lower() == 'true'
 ENABLE_LLM_EDITOR = os.environ.get('ENABLE_LLM_EDITOR', 'false').lower() == 'true'
 
+CONFIG_ML = os.environ.get('CONFIG_ML', '')
+
 ## Note: Do not forget to also modify AgentConfig to use these values
 USE_LOCAGENT_TOOLS = os.environ.get('USE_LOCAGENT_TOOLS', 'false').lower() == 'true'
 ENABLE_CMD = os.environ.get('ENABLE_CMD', 'false').lower() == 'true'

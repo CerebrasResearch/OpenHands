@@ -1,0 +1,312 @@
+diff --git a/astropy/io/ascii/qdp.py b/astropy/io/ascii/qdp.py
+--- a/astropy/io/ascii/qdp.py
++++ b/astropy/io/ascii/qdp.py
+@@ -68,7 +68,7 @@ def _line_type(line, delimiter=None):
+     _new_re = rf"NO({sep}NO)+"
+     _data_re = rf"({_decimal_re}|NO|[-+]?nan)({sep}({_decimal_re}|NO|[-+]?nan))*)"
+     _type_re = rf"^\s*((?P<command>{_command_re})|(?P<new>{_new_re})|(?P<data>{_data_re})?\s*(\!(?P<comment>.*))?\s*$"
+-    _line_type_re = re.compile(_type_re)
++    _line_type_re = re.compile(_type_re, re.IGNORECASE)
+     line = line.strip()
+     if not line:
+         return "comment"
+@@ -306,7 +306,7 @@ def _get_tables_from_qdp_file(qdp_file, input_colnames=None, delimiter=None):
+
+             values = []
+             for v in line.split(delimiter):
+-                if v == "NO":
++                if v.upper() == "NO":
+                     values.append(np.ma.masked)
+                 else:
+                     # Understand if number is int or float
+
+# diff --git a/pyproject.toml b/pyproject.toml
+# index 287a356a0..f2ee6c47c 100644
+# --- a/pyproject.toml
+# +++ b/pyproject.toml
+# @@ -1,5 +1,5 @@
+#  [build-system]
+# -requires = ["setuptools",
+# +requires = ["setuptools==68.0.0",
+#              "setuptools_scm>=6.2",
+#              "wheel",
+#              "cython==0.29.30",
+diff --git a/test.qdp b/test.qdp
+new file mode 100644
+index 000000000..5479bdc81
+--- /dev/null
++++ b/test.qdp
+@@ -0,0 +1,2 @@
++read serr 1 2
++1 0.5 1 0.5
+diff --git a/test_comprehensive_case.py b/test_comprehensive_case.py
+new file mode 100644
+index 000000000..ba442c237
+--- /dev/null
++++ b/test_comprehensive_case.py
+@@ -0,0 +1,79 @@
++#!/usr/bin/env python3
++"""
++Comprehensive test script for QDP case sensitivity fix.
++Tests various case combinations of QDP commands.
++"""
++
++from astropy.table import Table
++import numpy as np
++
++def test_case_combination(command_text, description):
++    """Test a specific case combination of QDP commands."""
++    print(f"\nTesting {description}:")
++    print(f"Command: {command_text}")
++
++    # Create QDP content with the command
++    qdp_content = f"""{command_text}
++1 0.5 2 0.3
++"""
++
++    # Write test file
++    filename = f"test_{description.lower().replace(' ', '_').replace('/', '_')}.qdp"
++    with open(filename, 'w') as f:
++        f.write(qdp_content)
++
++    # Try to read it
++    try:
++        table = Table.read(filename, format='ascii.qdp')
++        print(f"SUCCESS: Table read successfully!")
++        print(f"Columns: {table.colnames}")
++        print(f"Data: {table}")
++        return True
++    except Exception as e:
++        print(f"ERROR: {e}")
++        return False
++
++# Test various case combinations
++test_cases = [
++    ("READ SERR 1 2", "uppercase READ SERR"),
++    ("read serr 1 2", "lowercase read serr"),
++    ("Read Serr 1 2", "mixed case Read Serr"),
++    ("READ TERR 1", "uppercase READ TERR"),
++    ("read terr 1", "lowercase read terr"),
++    ("Read Terr 1", "mixed case Read Terr"),
++    ("ReAd SeRr 1 2", "random case ReAd SeRr"),
++    ("rEaD tErR 1", "random case rEaD tErR"),
++]
++
++print("Testing various case combinations of QDP commands...")
++print("=" * 60)
++
++all_passed = True
++for command, description in test_cases:
++    passed = test_case_combination(command, description)
++    if not passed:
++        all_passed = False
++
++print("\n" + "=" * 60)
++if all_passed:
++    print("ALL TESTS PASSED: Case-insensitive parsing works correctly!")
++else:
++    print("SOME TESTS FAILED: There are issues with case-insensitive parsing.")
++
++# Test with multiple commands
++print("\nTesting multiple commands with mixed case:")
++multi_command_content = """Read Serr 1
++read terr 2
++3 0.1 4 0.2 -0.15
++"""
++
++with open('test_multi_commands.qdp', 'w') as f:
++    f.write(multi_command_content)
++
++try:
++    table = Table.read('test_multi_commands.qdp', format='ascii.qdp')
++    print("SUCCESS: Multiple mixed-case commands work!")
++    print(f"Columns: {table.colnames}")
++    print(f"Data shape: {len(table)} rows, {len(table.colnames)} columns")
++except Exception as e:
++    print(f"ERROR with multiple commands: {e}")
+\ No newline at end of file
+diff --git a/test_exact_issue_example.py b/test_exact_issue_example.py
+new file mode 100644
+index 000000000..003e8912b
+--- /dev/null
++++ b/test_exact_issue_example.py
+@@ -0,0 +1,44 @@
++#!/usr/bin/env python3
++"""
++Test script that exactly replicates the issue description example.
++"""
++
++# Create the exact QDP file from the issue description
++qdp_content = """read serr 1 2
++1 0.5 1 0.5
++"""
++
++# Write the test file exactly as described in the issue
++with open('test.qdp', 'w') as f:
++    f.write(qdp_content)
++
++print("Created test.qdp with exact content from issue description:")
++print(repr(qdp_content))
++
++# Try to read it exactly as shown in the issue
++try:
++    from astropy.table import Table
++    table = Table.read('test.qdp', format='ascii.qdp')
++    print("\nSUCCESS: Table read successfully!")
++    print("Table structure:")
++    print(table)
++    print(f"\nColumn names: {table.colnames}")
++    print(f"Number of rows: {len(table)}")
++    print(f"Number of columns: {len(table.colnames)}")
++
++    # Verify it has the expected structure with errors
++    expected_cols = ['col1', 'col1_err', 'col2', 'col2_err']
++    if table.colnames == expected_cols:
++        print("✓ Column names match expected structure with errors")
++    else:
++        print(f"✗ Column names don't match. Expected: {expected_cols}, Got: {table.colnames}")
++
++    # Verify the data values
++    if len(table) == 1 and table['col1'][0] == 1 and table['col1_err'][0] == 0.5 and table['col2'][0] == 1 and table['col2_err'][0] == 0.5:
++        print("✓ Data values match expected values")
++    else:
++        print("✗ Data values don't match expected values")
++
++except Exception as e:
++    print(f"\nERROR: {e}")
++    print("The issue has NOT been fixed.")
+\ No newline at end of file
+diff --git a/test_lowercase_read_serr.qdp b/test_lowercase_read_serr.qdp
+new file mode 100644
+index 000000000..421e81648
+--- /dev/null
++++ b/test_lowercase_read_serr.qdp
+@@ -0,0 +1,2 @@
++read serr 1 2
++1 0.5 2 0.3
+diff --git a/test_lowercase_read_terr.qdp b/test_lowercase_read_terr.qdp
+new file mode 100644
+index 000000000..901e4766a
+--- /dev/null
++++ b/test_lowercase_read_terr.qdp
+@@ -0,0 +1,2 @@
++read terr 1
++1 0.5 2 0.3
+diff --git a/test_mixed_case_read_serr.qdp b/test_mixed_case_read_serr.qdp
+new file mode 100644
+index 000000000..dea730bc5
+--- /dev/null
++++ b/test_mixed_case_read_serr.qdp
+@@ -0,0 +1,2 @@
++Read Serr 1 2
++1 0.5 2 0.3
+diff --git a/test_mixed_case_read_terr.qdp b/test_mixed_case_read_terr.qdp
+new file mode 100644
+index 000000000..685067b41
+--- /dev/null
++++ b/test_mixed_case_read_terr.qdp
+@@ -0,0 +1,2 @@
++Read Terr 1
++1 0.5 2 0.3
+diff --git a/test_multi_commands.qdp b/test_multi_commands.qdp
+new file mode 100644
+index 000000000..0b986718b
+--- /dev/null
++++ b/test_multi_commands.qdp
+@@ -0,0 +1,3 @@
++Read Serr 1
++read terr 2
++3 0.1 4 0.2 -0.15
+diff --git a/test_random_case_read_serr.qdp b/test_random_case_read_serr.qdp
+new file mode 100644
+index 000000000..a3edd9543
+--- /dev/null
++++ b/test_random_case_read_serr.qdp
+@@ -0,0 +1,2 @@
++ReAd SeRr 1 2
++1 0.5 2 0.3
+diff --git a/test_random_case_read_terr.qdp b/test_random_case_read_terr.qdp
+new file mode 100644
+index 000000000..8b497ab7e
+--- /dev/null
++++ b/test_random_case_read_terr.qdp
+@@ -0,0 +1,2 @@
++rEaD tErR 1
++1 0.5 2 0.3
+diff --git a/test_reproduce_issue.py b/test_reproduce_issue.py
+new file mode 100644
+index 000000000..c9bc75bac
+--- /dev/null
++++ b/test_reproduce_issue.py
+@@ -0,0 +1,45 @@
++#!/usr/bin/env python3
++"""
++Script to reproduce the QDP case sensitivity issue.
++"""
++
++# Create a QDP file with lowercase commands as described in the issue
++qdp_content = """read serr 1 2
++1 0.5 1 0.5
++"""
++
++# Write the test file
++with open('test.qdp', 'w') as f:
++    f.write(qdp_content)
++
++print("Created test.qdp with lowercase commands:")
++print(qdp_content)
++
++# Try to read it with astropy
++try:
++    from astropy.table import Table
++    table = Table.read('test.qdp', format='ascii.qdp')
++    print("SUCCESS: Table read successfully!")
++    print(table)
++except Exception as e:
++    print(f"ERROR: {e}")
++    print("This confirms the issue - lowercase commands are not recognized.")
++
++# Also test with uppercase commands to confirm it works
++qdp_content_upper = """READ SERR 1 2
++1 0.5 1 0.5
++"""
++
++with open('test_upper.qdp', 'w') as f:
++    f.write(qdp_content_upper)
++
++print("\nCreated test_upper.qdp with uppercase commands:")
++print(qdp_content_upper)
++
++try:
++    from astropy.table import Table
++    table = Table.read('test_upper.qdp', format='ascii.qdp')
++    print("SUCCESS: Table with uppercase commands read successfully!")
++    print(table)
++except Exception as e:
++    print(f"ERROR with uppercase: {e}")
+\ No newline at end of file
+diff --git a/test_upper.qdp b/test_upper.qdp
+new file mode 100644
+index 000000000..773228a94
+--- /dev/null
++++ b/test_upper.qdp
+@@ -0,0 +1,2 @@
++READ SERR 1 2
++1 0.5 1 0.5
+diff --git a/test_uppercase_read_serr.qdp b/test_uppercase_read_serr.qdp
+new file mode 100644
+index 000000000..6ef38d10e
+--- /dev/null
++++ b/test_uppercase_read_serr.qdp
+@@ -0,0 +1,2 @@
++READ SERR 1 2
++1 0.5 2 0.3
+diff --git a/test_uppercase_read_terr.qdp b/test_uppercase_read_terr.qdp
+new file mode 100644
+index 000000000..e3883472e
+--- /dev/null
++++ b/test_uppercase_read_terr.qdp
+@@ -0,0 +1,2 @@
++READ TERR 1
++1 0.5 2 0.3
+

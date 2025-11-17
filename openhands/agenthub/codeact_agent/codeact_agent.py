@@ -291,6 +291,8 @@ class CodeActAgent(Agent):
         else:
             is_last_tool_called = True
 
+        # TODO:continue reflection... until n_finish reached, start with 1
+
         actions = self.response_to_actions(response, is_last_tool_called)
         logger.debug(f'Actions after response_to_actions: {actions}')
         for action in actions:

@@ -6,36 +6,49 @@ set -e  # Exit on any error
 ##########################
 # ----- ARGUMENTS -------#
 ##########################
-EVAL_OUTNAME=$1
-LOCAGENT_TOOLS=$2
-USE_CMD=$3
-TEMPLATE_NAME=$4
-ADD_LOCAGENT_TOOLS_FIRST=$5
-ALT_LOCAGENT_TOOLS=$6
-CODE_COMMENTS_TOOL=$7
-THINK_PLAN=$8
-STR_REPL_THINK=$9
-MODEL=${10:-"llm.qwen_coder_30b_small"}
-LOCAL_DOCKER_DIR=${11}
-CONFIG_ML=${12}
-MAX_TURNS=${13:-100}
-NUM_SAMPLES=${14:-200}
-DATASET=${15:-"princeton-nlp/SWE-bench"}
-SPLIT=${16:-"dev"}
-# DATASET="princeton-nlp/SWE-bench_Verified"
-# SPLIT="test"
+
+LOCAGENT_TOOLS="false"
+USE_CMD="true"
+TEMPLATE_NAME="swe_default.j2"
+ADD_LOCAGENT_TOOLS_FIRST="false"
+ALT_LOCAGENT_TOOLS="false"
+CODE_COMMENTS_TOOL="false"
+THINK_PLAN="false"
+STR_REPL_THINK="false"
+MODEL="cepov2_optillm_qwen480b_together"
+# MODEL="llm.together_qwen_480b"
+# LOCAL_DOCKER_DIR="/workspaces/Openhands/swebench_dockers_for_eval/swebench_dockers/dev/docker_images/"
+LOCAL_DOCKER_DIR="/workspaces/Openhands/swebench_dockers_for_eval/swebench_verified_dockers/test/docker_images"
+CONFIG_ML="/workspaces/OpenHands/evaluation/benchmarks/swe_bench/config_2.toml"
+MAX_TURNS=500
+# DATASET="princeton-nlp/SWE-bench"
+# SPLIT="dev"
+DATASET="princeton-nlp/SWE-bench_Verified"
+SPLIT="test"
+NUM_SAMPLES=10
+EVAL_OUTNAME="cepo_michael_v5_1117_qwen480b_together_maxiter_500_N_${NUM_SAMPLES}_verified"
+
 
 NUM_WORKERS=1
 NUM_RUNS=1
+
+EVAL_OUTPUT_DIR="/workspaces/OpenHands/evaluation/evaluation_outputs/outputs/princeton-nlp__SWE-bench_Verified/CodeActAgent/$EVAL_OUTNAME/"
+
+# Check if the directory exists and is not empty variable
+if [ -n "$EVAL_OUTPUT_DIR" ] && [ -d "$EVAL_OUTPUT_DIR" ]; then
+    rm -r "$EVAL_OUTPUT_DIR"
+    echo "Removed: $EVAL_OUTPUT_DIR"
+else
+    echo "Directory does not exist: $EVAL_OUTPUT_DIR"
+fi
 
 #######################################
 # 📋 Setup Logging to File and Log CMD
 #######################################
 
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-LOGDIR_RUN="logs_end_to_end"
-mkdir -p "$LOGDIR_RUN"
-LOGFILE="$LOGDIR_RUN/eval_run_${EVAL_OUTNAME}_${TIMESTAMP}.log"
+
+LOGFILE="eval_run_${TIMESTAMP}.log"
 
 # Start logging stdout and stderr
 exec > >(tee -i "$LOGFILE") 2>&1
@@ -51,7 +64,14 @@ echo "========================================"
 ##########################
 # ---- ENV EXPORTS ------#
 ##########################
-export EVAL_OUTPUT_DIR="evaluation/$EVAL_OUTNAME/outputs"
+# Usage:
+#   ./run.sh                      # default: gen_and_eval
+#   ./run.sh inference_only
+#   ./run.sh eval_only
+#   ./run.sh gen_and_eval
+MODE=${1:-gen_and_eval}   # inference_only | eval_only | gen_and_eval
+
+export EVAL_OUTPUT_DIR=$EVAL_OUTPUT_DIR
 export USE_LOCAGENT_TOOLS=$LOCAGENT_TOOLS
 export ADD_LOCAGENT_TOOLS_FIRST=$ADD_LOCAGENT_TOOLS_FIRST
 export ENABLE_CMD=$USE_CMD
@@ -64,6 +84,7 @@ export DEBUG=1
 export EVAL_SKIP_MAXIMUM_RETRIES_EXCEEDED=true
 export LOCAL_DOCKER_IMAGE_DIR=$LOCAL_DOCKER_DIR
 export CONFIG_ML=$CONFIG_ML
+export OPENAI_API_KEY="serving-on-vllm"
 
 ##########################
 # ----- CONFIG LOG ------#
@@ -87,42 +108,72 @@ echo "  NUM_RUNS:                   $NUM_RUNS"
 echo "  DATASET:                    $DATASET"
 echo "  SPLIT:                      $SPLIT"
 echo "  LOCAL_DOCKER_IMAGE_DIR:     $LOCAL_DOCKER_IMAGE_DIR"
+echo "  CONFIG_ML:                  $CONFIG_ML"
 echo "=========================================================="
 echo ""
 
 ##########################
 # -- RUN INFERENCE ----- #
 ##########################
-# Placeholder for actual inference call
-# Uncomment and customize if needed
-# /path/to/inference.sh $MODEL ...
-#############################
-# 🚀 Run Main Evaluation   #
-#############################
-echo "🔧 Starting main inference..."
-/workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer_local_docker.sh \
-    $MODEL \
-    HEAD \
-    CodeActAgent \
-    $NUM_SAMPLES \
-    $MAX_TURNS \
-    $NUM_WORKERS \
-    $DATASET \
-    $SPLIT \
-    $NUM_RUNS \
-    swe
-echo "✅ Evaluation complete. Results saved in $EVAL_OUTPUT_DIR"
-echo
+JSONL_DIR=$EVAL_OUTPUT_DIR
+
+if [[ "$MODE" == "inference_only" || "$MODE" == "gen_and_eval" ]]; then
+    echo "🔧 Starting main inference..."
+    /workspaces/OpenHands/evaluation/benchmarks/swe_bench/scripts/run_infer_local_docker.sh \
+        $MODEL \
+        HEAD \
+        CodeActAgent \
+        $NUM_SAMPLES \
+        $MAX_TURNS \
+        $NUM_WORKERS \
+        $DATASET \
+        $SPLIT \
+        $NUM_RUNS \
+        swe
+    echo "✅ Inference complete. Results saved in $EVAL_OUTPUT_DIR"
+    echo
+else
+    echo "⏭️  Skipping inference step (mode=$MODE)"
+fi
+
+
+# Find the produced JSONL (or the existing one, if eval_only)
+ALL_JSONL_FILES=$(find "$JSONL_DIR" -type f -name "output.jsonl" || true)
+JSONL_FILE=$(echo "$ALL_JSONL_FILES" | head -n 1 || true)
+if [[ -z "$JSONL_FILE" ]]; then
+    echo "❌ Could not find output.jsonl under $JSONL_DIR"
+    echo "   Make sure inference has been run or EVAL_OUTPUT_DIR is correct."
+    exit 1
+fi
+
+PARENT_FOLDER=$(dirname "$JSONL_FILE")
+
+# If mode is inference_only, stop here
+if [[ "$MODE" == "inference_only" ]]; then
+    echo "🎉 inference_only mode: stopping after inference."
+    echo "📂 Results located in: $PARENT_FOLDER"
+
+    # inference_only: do cleanup before exiting
+    echo ""
+    echo ">>> CLEANUP EXTRA MODEL MESSAGE HISTORY FILES (inference_only)"
+    python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/clean_up.py \
+        --evaluation_folder "$EVAL_OUTPUT_DIR"
+    echo "✅ Cleaned up all intermediate model generation files (inference_only)"
+
+    exit 0
+fi
+
+
+#################################
+# Below runs for: gen_and_eval, eval_only
+#################################
 
 ##########################
 # --- TOOL CALL SUMMARY --#
 ##########################
+
 echo ">>> [1/5] TOOL CALL SUMMARY"
 
-JSONL_DIR="/workspaces/OpenHands/$EVAL_OUTPUT_DIR"
-ALL_JSONL_FILES=$(find "$JSONL_DIR" -type f -name "output.jsonl")
-JSONL_FILE=$(echo "$ALL_JSONL_FILES" | head -n 1)
-PARENT_FOLDER=$(dirname "$JSONL_FILE")
 TOOL_SUMMARY_OUTPUT="$PARENT_FOLDER/bash_tool_call_summary_$MODEL"
 
 echo "    Using JSONL file: $JSONL_FILE"
@@ -240,6 +291,15 @@ python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/gener
     --localization_report "$LOC_JSONL_FILE"
 
 echo "✅ Final summary generated."
+
+##########################
+# -------- CLEAN UP -------- #
+##########################
+echo ""
+echo ">>> CLEANUP EXTRA MODEL MESSAGE HISTORY FILES"
+python /workspaces/OpenHands/evaluation/benchmarks/swe_bench/other_scripts/clean_up.py \
+    --evaluation_folder "$EVAL_OUTPUT_DIR"
+echo "✅ Cleaned up all intermediate model generation files"
 
 ##########################
 # -------- DONE -------- #

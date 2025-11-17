@@ -12,12 +12,13 @@
 		"ghcr.io/devcontainers/features/node:1": {}
 	},
 	"postCreateCommand": ".devcontainer/setup.sh",
-	"runArgs": ["--name=aug29-3_aarti_test_oh_3", "--add-host=host.docker.internal:host-gateway", "--network=host"],
+	"runArgs": ["--name=aug29-3_michaelw_test_oh_0111", "--add-host=host.docker.internal:host-gateway", "--network=host"],
 	"containerEnv": {
 		"DOCKER_HOST_ADDR": "host.docker.internal"
 	},
 	"mounts": [
-		"source=/mlf11-shared/swebench_dockers_for_eval,target=/workspaces/Openhands/swebench_dockers_for_eval,type=bind,consistency=cached"  // the Openhands instead of OpenHands is intentional, due to file mounting issues
+		"source=/mlf11-shared/swebench_dockers_for_eval,target=/workspaces/Openhands/swebench_dockers_for_eval,type=bind,consistency=cached",
+		"source=/mlf14-shared/michaelw/runtime_dockers,target=/workspaces/Openhands/runtime_dockers,type=bind,consistency=cached"
 	],
 	"customizations": {
         "vscode": {
