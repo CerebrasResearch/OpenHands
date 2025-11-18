@@ -15,13 +15,14 @@ ALT_LOCAGENT_TOOLS=$6
 CODE_COMMENTS_TOOL=$7
 THINK_PLAN=$8
 STR_REPL_THINK=$9
-MODEL=${10:-"llm.qwen_coder_30b_small"}
-LOCAL_DOCKER_DIR=${11}
-CONFIG_ML=${12}
-MAX_TURNS=${13:-100}
-NUM_SAMPLES=${14:-200}
-DATASET=${15:-"princeton-nlp/SWE-bench"}
-SPLIT=${16:-"dev"}
+SUMMARY_MODEL=${10:-"false"}
+MODEL=${11:-"llm.qwen_coder_30b_small"}
+LOCAL_DOCKER_DIR=${12}
+CONFIG_ML=${13}
+MAX_TURNS=${14:-100}
+NUM_SAMPLES=${15:-200}
+DATASET=${16:-"princeton-nlp/SWE-bench"}
+SPLIT=${17:-"dev"}
 # DATASET="princeton-nlp/SWE-bench_Verified"
 # SPLIT="test"
 
@@ -64,6 +65,7 @@ export DEBUG=1
 export EVAL_SKIP_MAXIMUM_RETRIES_EXCEEDED=true
 export LOCAL_DOCKER_IMAGE_DIR=$LOCAL_DOCKER_DIR
 export CONFIG_ML=$CONFIG_ML
+export ENABLE_SUMMARY_MODEL=$SUMMARY_MODEL
 
 ##########################
 # ----- CONFIG LOG ------#
@@ -80,6 +82,7 @@ echo "  ENABLE_CMD:                 $ENABLE_CMD"
 echo "  THINK_PLAN_BRAINSTORM:      $THINK_PLAN_BRAINSTORM"
 echo "  ENABLE_STR_REPLACE:         $ENABLE_STR_REPLACE_EDIT_THINK_CHECK"
 echo "  INSTRUCTION_TEMPLATE_NAME:  $INSTRUCTION_TEMPLATE_NAME"
+echo "  ENABLE_SUMMARY_MODEL:       $ENABLE_SUMMARY_MODEL"
 echo "  MAX_TURNS:                  $MAX_TURNS"
 echo "  NUM_SAMPLES:                $NUM_SAMPLES"
 echo "  NUM_WORKERS:                $NUM_WORKERS"

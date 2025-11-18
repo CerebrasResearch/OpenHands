@@ -67,6 +67,7 @@ class IPythonRunCellAction(Action):
 @dataclass
 class IPythonRunCellSummaryAction(Action):
     code: str
+    initial_user_message : str = ''
     thought: str = ''
     include_extra: bool = (
         True  # whether to include CWD & Python interpreter in the output
@@ -86,4 +87,4 @@ class IPythonRunCellSummaryAction(Action):
 
     @property
     def message(self) -> str:
-        return f'Running Python code interactively: {self.code}. Summary of output will be generated.'
+        return f'Running Python code interactively: {self.code}. Summary of output will be generated. initail user message: {self.initial_user_message}'

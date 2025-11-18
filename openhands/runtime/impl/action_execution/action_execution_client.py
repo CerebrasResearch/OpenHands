@@ -273,13 +273,63 @@ class ActionExecutionClient(Runtime):
             return ''
 
 
+
+
     def ipython_generate_summary(self, action: IPythonRunCellSummaryAction, num_retries=3) -> Observation:
-        USR_MSG = """
+
+        def extract_until_delimiter(text, delimiter="Follow these phases to resolve the issue:"):
+            """
+            Extract string content until a specific delimiter is encountered.
+
+            Args:
+                text: The input text to process
+                delimiter: The string to stop at (default: "Follow these phases to resolve the issue:")
+
+            Returns:
+                The extracted string up to (but not including) the delimiter
+            """
+            if delimiter in text:
+                return text.split(delimiter)[0].strip()
+            return text.strip()
+
+            # Usage with your text:
+            extracted = extract_until_delimiter(text)
+            return extracted
+        USR_MSG_v1 = """
         Please summarize the following into a concise description. Focus on the main functionality and purpose, avoiding implementation details. The summary should be clear and informative, suitable for someone who wants to understand the intent without reading through the entire cell.
 
         {input_to_summarize}
 
         """
+
+        USR_MSG_v2 = """
+        Given a user query \n\n {user_query} \n\n and the contents of the code repository including code comments and function definitions, first find the relevant code sections that answer the query, and all the necessary files and functions if any that need to be understood to answer the query. Then, provide a concise summary of the code sections that directly address the user query. The summary should focus on the main functionality and purpose, avoiding implementation details. The summary should be clear and informative, suitable for someone who wants to understand the intent without reading through the entire cell. \n\n Here is the code repository structure and contents: \n\n
+        {input_to_summarize}
+        """
+
+        USR_MSG_v3 = """
+        You are analyzing a code repository to answer user queries.
+
+        **User Query:** {user_query}
+
+        **Task:**
+        1. Identify the code sections, files, and functions most relevant to answering the query
+        2. Trace any dependencies or related components needed for full understanding
+        3. Provide a clear, concise summary that explains:
+        - What the code does (main functionality and purpose)
+        - How it addresses the user's query
+        - Key relationships between components (if applicable)
+
+        **Guidelines:**
+        - Focus on intent and behavior, not implementation details
+        - Use plain language suitable for developers unfamiliar with this codebase
+        - Highlight the most relevant sections first
+        - If the query cannot be fully answered, explain what's missing
+
+        **Repository Contents:**
+        {input_to_summarize}
+        """
+
         obs = self.run_ipython(IPythonRunCellAction(code=action.code, thought=action.thought))
         if isinstance(obs, ErrorObservation):
             return obs
@@ -290,21 +340,27 @@ class ActionExecutionClient(Runtime):
         content = obs.content
         if self.config.get_agent_config().enable_summary_model:
             while num_retries > 0:
+                user_query = extract_until_delimiter(action.initial_user_message)
                 messages = [
                     {
                         'role': 'user',
-                        'content': USR_MSG.format(input_to_summarize=content)
+                        'content': USR_MSG_v3.format(input_to_summarize=content, user_query=user_query),
 
                     },
                 ]
+                print(f"----messages to summarize: {USR_MSG_v2.format(input_to_summarize=content, user_query=user_query)}")
                 resp = self.summary_model_llm.completion(messages=messages)
                 text_response = resp['choices'][0]['message']['content']
                 if resp is not None:
                     ret_obs = IPythonRunCellSummaryObservation(
                         content=text_response,
                         code=action.code,
+                        input_str=content,
                     )
                     ret_obs.llm_metrics = self.summary_model_llm.metrics
+                    print(ret_obs)
+                    print("xxxxxxxxx ---- REMOVE EXIT CALL HERE Summary generated successfully.")
+                    raise ValueError("Exit called to prevent further execution during testing.")
                     return ret_obs
                 num_retries -= 1
             return obs

@@ -291,7 +291,7 @@ class CodeActAgent(Agent):
         else:
             is_last_tool_called = True
 
-        actions = self.response_to_actions(response, is_last_tool_called)
+        actions = self.response_to_actions(response, is_last_tool_called, initial_user_message.content)
         logger.debug(f'Actions after response_to_actions: {actions}')
         for action in actions:
             self.pending_actions.append(action)
@@ -366,13 +366,14 @@ class CodeActAgent(Agent):
 
         return messages
 
-    def response_to_actions(self, response: 'ModelResponse', is_last_tool_called: bool) -> list['Action']:
+    def response_to_actions(self, response: 'ModelResponse', is_last_tool_called: bool, initial_user_message: str) -> list['Action']:
 
         return codeact_function_calling.response_to_actions(
             response,
             mcp_tool_names=list(self.mcp_tools.keys()),
             is_last_tool_called=is_last_tool_called,
             enable_summary_model=self.config.enable_summary_model,
+            initial_user_message=initial_user_message
         )
 
     def get_last_tool_call(self, state: State, tool_args):

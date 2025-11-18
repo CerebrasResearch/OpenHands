@@ -122,7 +122,7 @@ def set_security_risk(action: Action, arguments: dict) -> None:
 
 
 def response_to_actions(
-    response: ModelResponse, mcp_tool_names: list[str] | None = None, is_last_tool_called = True, enable_summary_model: bool = False
+    response: ModelResponse, mcp_tool_names: list[str] | None = None, is_last_tool_called = True, enable_summary_model: bool = False, initial_user_message: str = ""
 ) -> list[Action]:
     actions: list[Action] = []
     assert len(response.choices) == 1, 'Only one choice is supported for now'
@@ -412,12 +412,12 @@ def response_to_actions(
                     action = IPythonRunCellAction(code=code)
                 else:
                     if tool_call.function.name == "explore_tree_structure":
-                        action = IPythonRunCellSummaryAction(code=code)
+                        action = IPythonRunCellSummaryAction(code=code, initial_user_message=initial_user_message)
                     else:
                         action = IPythonRunCellAction(code=code)
 
             elif tool_call.function.name in LOCAGENT_ALT_FUNCTIONS:
-                action = handle_alternate_locagent_tool(tool_call, arguments, enable_summary_model)
+                action = handle_alternate_locagent_tool(tool_call, arguments, enable_summary_model, initial_user_message)
             else:
                 logger.debug(f"------- tool_call: {tool_call}, arguments: {arguments}, LOCAGENT_FUNCTIONS: {LOCAGENT_FUNCTIONS}")
                 logger.debug(f"------- tool_call: {tool_call}, arguments: {arguments}, LOCAGENT_ALT_FUNCTIONS: {LOCAGENT_ALT_FUNCTIONS}")
@@ -457,7 +457,7 @@ def response_to_actions(
 
 
 
-def handle_alternate_locagent_tool(tool_call, arguments, enable_summary_model: bool = False) -> Action:
+def handle_alternate_locagent_tool(tool_call, arguments, enable_summary_model: bool = False, initial_user_message="") -> Action:
 
     code_map = {
         "explore_code_structure": "explore_tree_structure",
@@ -512,7 +512,7 @@ def handle_alternate_locagent_tool(tool_call, arguments, enable_summary_model: b
         action = IPythonRunCellAction(code=code)
     else:
         if tool_call.function.name == "explore_code_structure" or tool_call.function.name == 'get_code_structure_overview_with_code_comments':
-            action = IPythonRunCellSummaryAction(code=code)
+            action = IPythonRunCellSummaryAction(code=code, initial_user_message=initial_user_message)
         else:
             action = IPythonRunCellAction(code=code)
     return action

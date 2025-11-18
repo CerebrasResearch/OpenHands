@@ -238,6 +238,7 @@ class IPythonRunCellSummaryObservation(Observation):
     # class SummaryObservation(Observation):
 
     code: str
+    input_str: str
     observation: str = ObservationType.RUN_IPYTHON_SUMMARY
 
     @property
@@ -253,6 +254,6 @@ class IPythonRunCellSummaryObservation(Observation):
         return True  # IPython cells are always considered successful
 
     def __str__(self) -> str:
-        result = f'**SummaryObservation** of {self.code}\n{self.content}'
+        result = f'**SummaryObservation** of {self.code}\n\n INPUT TO SUMMARIZE: {self.input_str} \n\n Summary:{self.content}'
 
         return result
