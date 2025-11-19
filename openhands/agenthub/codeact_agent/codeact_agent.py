@@ -87,6 +87,9 @@ class CodeActAgent(Agent):
         super().__init__(config, llm_registry)
         self.pending_actions: deque['Action'] = deque()
         self.reset()
+        # NOTE: add this to reduce redundancy with cepo agent
+        self.config.system_prompt_filename="system_prompt_michael.j2"
+        self.config.enable_plan_mode = False
         self.tools = self._get_tools()
 
         # Create a ConversationMemory instance

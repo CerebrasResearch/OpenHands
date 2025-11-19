@@ -9,7 +9,7 @@ set -e  # Exit on any error
 
 LOCAGENT_TOOLS="false"
 USE_CMD="true"
-TEMPLATE_NAME="swe_default.j2"
+TEMPLATE_NAME="swe_michael.j2"
 ADD_LOCAGENT_TOOLS_FIRST="false"
 ALT_LOCAGENT_TOOLS="false"
 CODE_COMMENTS_TOOL="false"
@@ -26,7 +26,7 @@ MAX_TURNS=500
 DATASET="princeton-nlp/SWE-bench_Verified"
 SPLIT="test"
 NUM_SAMPLES=10
-EVAL_OUTNAME="cepo_michael_v5_1117_qwen480b_together_maxiter_500_N_${NUM_SAMPLES}_verified"
+EVAL_OUTNAME="cepo_v8_1119_qwen480b_together_maxiter_500_N_${NUM_SAMPLES}_verified"
 
 
 NUM_WORKERS=1
