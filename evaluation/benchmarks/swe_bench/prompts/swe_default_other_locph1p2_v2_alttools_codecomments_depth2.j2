@@ -23,18 +23,15 @@ Phase 1.1. READING: Understand the PROBLEM: read the problem and reword it in cl
    1.1.5 Hightlight any best practices to take into account when testing and fixing the issue
 
 Phase 1.2 Understand the CODE Repository: read the codebase description using `get_code_structure_overview_with_code_comments`, `search_for_code`, `get_code_contents_from_path_names` and `get_code_from_line_numbers
-   1.2.1. Build a global view of the code directory structure using `get_code_structure_overview_with_code_comments` with `traversal_depth` greater than equal to 2  and `dependency_type_filter=['contains']`.
-      - Always begin with the root path and use `/`.
+   1.2.1. Build a global view of the code directory structure using `get_code_structure_overview_with_code_comments` with `traversal_depth` greater than equal to 2  and `dependency_type_filter=[\"contains\"]`.
+      - Always begin with the root path and use "/".
       - Always use relative path to the /workspace/{{ workspace_dir_name }} directory.
-      - If you are not sure about the path, use `/` as the root path to explore the code repository structure.
+      - If you are not sure about the path, use "/" as the root path to explore the code repository structure.
 
    Example Usage:
-      Exploring the repository structure from the root directory (/) up to two levels deep:
+      Exploring the repository structure from the root directory ("/") up to two levels deep:
       ```
-      get_code_structure_overview_with_code_comments(
-         start=['/'],
-         traversal_depth=2,
-         dependency_type_filter=['contains'])
+      get_code_structure_overview_with_code_comments(start=[\"/\"], traversal_depth=2, dependency_type_filter=[\"contains\"])
       ```
 
    1.2.2. Identify likely candidates for relevant repository directories and build a deeper understanding of them using `search_for_code`
@@ -51,21 +48,21 @@ Phase 1.2 Understand the CODE Repository: read the codebase description using `g
    Example Usage:
       Search for context around specific lines (10 and 15) within a file
       ```
-      get_code_from_line_numbers(line_nums=[10, 15], file_path_or_pattern='src/example.py')
+      get_code_from_line_numbers(line_nums=[10, 15], file_path_or_pattern="src/example.py")
       ```
    1.2.4. Finally, understand how relevant objects and functions are implemented, initialized and used using `get_code_contents_from_path_names`
    Example Usage:
       Search for a specific function implementation:
       ```
-      get_code_contents_from_path_names(path_names=['src/my_file.py:MyClass.func_name'])
+      get_code_contents_from_path_names(path_names=["src/my_file.py:MyClass.func_name"])
       ```
       Search for a file's complete content:
       ```
-      get_code_contents_from_path_names(path_names=['src/my_file.py'])
+      get_code_contents_from_path_names(path_names=["src/my_file.py"])
       ```
-      **CRITICAL:** To specify a function or class, use the format: `file_path:QualifiedName`\n  (e.g., 'src/helpers/math_helpers.py:MathUtils.calculate_sum').
-      - To search for a file's content, use only the file path (e.g., 'src/my_file.py').\n
-      - For classes, include the class name (e.g., 'src/models/user.py:User').
+      **CRITICAL:** To specify a function or class, use the format: `file_path:QualifiedName`\n  (e.g., "src/helpers/math_helpers.py:MathUtils.calculate_sum").
+      - To search for a file's content, use only the file path (e.g., "src/my_file.py").\n
+      - For classes, include the class name (e.g., "src/models/user.py:User").
 
 Phase 2. RUNNING: install and run the tests on the repository
    2.1 Follow the readme
@@ -79,7 +76,7 @@ Phase 3. EXPLORATION: find the files that are related to the problem and possibl
          Problem description, error trace, code to reproduce the bug, and additional context.
       - Extract specific terms, class names, method names, error messages from the issue
       - IMMEDIATE KEYWORD SEARCH: Use `search_for_code` first
-      - Run: search_for_code(search_terms=["extracted_keywords"]) - this provides initial map of problem-related  code locations in '/workspace/{{ workspace_dir_name }}' directory
+      - Run: search_for_code(search_terms=["extracted_keywords"]) - this provides initial map of problem-related  code locations in "/workspace/{{ workspace_dir_name }}" directory
       - Use extracted keywords and line numbers to search for relevant code references for additional context.
    3.2: Locate Referenced Modules
       - Accurately determine specific modules
@@ -87,16 +84,16 @@ Phase 3. EXPLORATION: find the files that are related to the problem and possibl
          - MANDATORY: Use 'get_code_structure_overview_with_code_comments' for codebase overview: For example
          ```
          get_code_structure_overview_with_code_comments(
-           start=['/'],
+           start=[\"/\"],
            traversal_depth=2,
-           dependency_type_filter=['contains']
+           dependency_type_filter=[\"contains\"]
          )
          ```
          - Understand organization, identify main modules, locate relevant directories
       - Pay special attention to distinguishing between modules with similar names using context and described execution flow.
       - Output Format for collected relevant modules:
-         - Use the format: 'file_path:QualifiedName'
-         - E.g., for a function `calculate_sum` in the `MathUtils` class located in `src/helpers/math_helpers.py`, represent it as: 'src/helpers/math_helpers.py:MathUtils.calculate_sum'.
+         - Use the format: "file_path:QualifiedName"
+         - E.g., for a function `calculate_sum` in the `MathUtils` class located in `src/helpers/math_helpers.py`, represent it as: "src/helpers/math_helpers.py:MathUtils.calculate_sum".
       **SYSTEMATIC APPROACH**: Combine all three tools:
          1. `search_for_code` - discover instances and patterns
          2. `get_code_contents_from_path_names` - examine complete implementations (** NO str_replace_editor with command arg = `view`**)

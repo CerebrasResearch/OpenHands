@@ -1,6 +1,7 @@
 import os
 import tempfile
 import threading
+import textwrap
 from pathlib import Path
 from typing import Any
 from zipfile import ZipFile
@@ -329,8 +330,10 @@ class ActionExecutionClient(Runtime):
         **Repository Contents:**
         {input_to_summarize}
         """
-
-        obs = self.run_ipython(IPythonRunCellAction(code=action.code, thought=action.thought))
+        ipython_action = IPythonRunCellAction(code=action.code, thought=action.thought)
+        ipython_action.blocking = True
+        ipython_action.set_hard_timeout(6000)
+        obs = self.run_ipython(ipython_action)
         if isinstance(obs, ErrorObservation):
             return obs
         if not isinstance(obs, IPythonRunCellObservation):
@@ -344,11 +347,11 @@ class ActionExecutionClient(Runtime):
                 messages = [
                     {
                         'role': 'user',
-                        'content': USR_MSG_v3.format(input_to_summarize=content, user_query=user_query),
+                        'content': textwrap.dedent(USR_MSG_v3).strip().format(input_to_summarize=content, user_query=user_query),
 
                     },
                 ]
-                print(f"----messages to summarize: {USR_MSG_v2.format(input_to_summarize=content, user_query=user_query)}")
+                print(f"----messages to summarize: \n {textwrap.dedent(USR_MSG_v3).strip().format(input_to_summarize=content, user_query=user_query)}")
                 resp = self.summary_model_llm.completion(messages=messages)
                 text_response = resp['choices'][0]['message']['content']
                 if resp is not None:
@@ -358,9 +361,9 @@ class ActionExecutionClient(Runtime):
                         input_str=content,
                     )
                     ret_obs.llm_metrics = self.summary_model_llm.metrics
-                    print(ret_obs)
-                    print("xxxxxxxxx ---- REMOVE EXIT CALL HERE Summary generated successfully.")
-                    raise ValueError("Exit called to prevent further execution during testing.")
+                    # print(ret_obs)
+                    # print("xxxxxxxxx ---- REMOVE EXIT CALL HERE Summary generated successfully.")
+                    # raise ValueError("Exit called to prevent further execution during testing.")
                     return ret_obs
                 num_retries -= 1
             return obs
