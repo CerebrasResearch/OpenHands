@@ -91,6 +91,7 @@ class CodeActAgent(Agent):
         self.config.system_prompt_filename="system_prompt_michael.j2"
         self.config.enable_plan_mode = False
         self.tools = self._get_tools()
+        self._cb_log = {}
 
         # Create a ConversationMemory instance
         self.conversation_memory = ConversationMemory(self.config, self.prompt_manager)
@@ -217,29 +218,11 @@ class CodeActAgent(Agent):
         super().reset()
         # Only clear pending actions, not LLM metrics
         self.pending_actions.clear()
+        self._cb_log = {}
 
     def step(self, state: State) -> 'Action':
-        """Performs one step using the CodeAct Agent.
+        """Performs one step using the CodeAct Agent."""
 
-        This includes gathering info on previous steps and prompting the model to make a command to execute.
-
-        Parameters:
-        - state (State): used to get updated info
-
-        Returns:
-        - CmdRunAction(command) - bash command to run
-        - IPythonRunCellAction(code) - IPython code to run
-        - AgentDelegateAction(agent, inputs) - delegate action for (sub)task
-        - MessageAction(content) - Message action to run (e.g. ask for clarification)
-        - AgentFinishAction() - end the interaction
-        - CondensationAction(...) - condense conversation history by forgetting specified events and optionally providing a summary
-        - FileReadAction(path, ...) - read file content from specified path
-        - FileEditAction(path, ...) - edit file using LLM-based (deprecated) or ACI-based editing
-        - AgentThinkAction(thought) - log agent's thought/reasoning process
-        - CondensationRequestAction() - request condensation of conversation history
-        - BrowseInteractiveAction(browser_actions) - interact with browser using specified actions
-        - MCPAction(name, arguments) - interact with MCP server tools
-        """
         # Continue with pending actions if any
         if self.pending_actions:
             return self.pending_actions.popleft()
@@ -267,17 +250,59 @@ class CodeActAgent(Agent):
 
         initial_user_message = self._get_initial_user_message(state.history)
         messages = self._get_messages(condensed_history, initial_user_message)
+
         params: dict = {
             'messages': messages,
         }
         params['tools'] = check_tools(self.tools, self.llm.config)
-        params['extra_body'] = {
+
+        # -----------------------------
+        # extra_body with cb_log hook
+        # -----------------------------
+        extra_body = {
             'metadata': state.to_llm_metadata(
                 model_name=self.llm.config.model, agent_name=self.name
             )
         }
+
+        # If we have CEPO cb_log from previous step, feed it back in
+        if self._cb_log is not None:
+            extra_body['cb_log'] = self._cb_log
+
+        params['extra_body'] = extra_body
+
+        # Call LLM (CEPO-backed model)
         response = self.llm.completion(**params)
-        logger.debug(f'Response from LLM: {response}')
+        # logger.debug(f'Response from LLM: {response}')
+
+        # -----------------------------
+        # Extract cb_log for next step
+        # -----------------------------
+        try:
+            choice0 = response.choices[0]
+
+            # First try top-level attribute (in case you later wire it that way)
+            cb_log = getattr(choice0, "cb_log", None)
+
+            # Fallback: look inside provider_specific_fields
+            if not isinstance(cb_log, dict):
+                psf = getattr(choice0, "provider_specific_fields", None)
+                if isinstance(psf, dict):
+                    cb_log = psf.get("cb_log")
+
+            if isinstance(cb_log, dict):
+                self._cb_log = cb_log
+                logger.debug(
+                    f"Updated CEPO cb_log state on agent: keys={list(cb_log.keys())}"
+                )
+
+        except Exception as e:
+            logger.debug(f"Could not extract cb_log from LLM response: {e}")
+
+
+        # ----------------------------------------------------
+        # Existing logic for str_replace_edit_think_check etc.
+        # ----------------------------------------------------
         if self.config.enable_str_replace_edit_think_check:
             if self.last_tool_call_variant == "every_call":
                 is_last_tool_called, last_tool_call_id = self.get_last_tool_call(state, self.last_tool_call_args)
